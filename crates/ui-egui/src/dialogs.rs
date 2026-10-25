@@ -333,6 +333,7 @@ fn about(ctx: &egui::Context, open: &mut bool) {
                     ui.label(RichText::new("A LiVi product, based on CADCraft by the ArtCraft Team.").color(t.text_dim));
                     ui.hyperlink_to("contact@liviverse.com", "mailto:contact@liviverse.com");
                     ui.hyperlink_to("www.liviverse.com", "https://www.liviverse.com");
+                    ui.label(RichText::new("Thanks to V S Siddesh Vijaay for his input.").small().color(t.text_faint));
                     ui.add_space(6.0);
                     ui.label(RichText::new(crate::tl!("MIT OR Apache-2.0. Not affiliated with Autodesk, Inc.")).small().color(t.text_faint));
                 }
