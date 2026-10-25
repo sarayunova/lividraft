@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/app.livi.lividraft.png" width="128" height="128" alt="LiVi Draft icon: a drafting set square and compass arc on a blue grid tile">
+  <img src="assets/app-icon/hicolor/256x256/apps/app.livi.lividraft.png" width="128" height="128" alt="LiVi Draft icon: a white dimension-line L with a quarter arc and an amber snap point on a blue-to-teal tile">
 </p>
 
 <h1 align="center">LiVi Draft</h1>

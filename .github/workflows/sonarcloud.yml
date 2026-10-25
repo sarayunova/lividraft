@@ -1,10 +1,8 @@
 name: SonarCloud
 
+# Manual only until a SonarCloud project and SONAR_TOKEN exist for this repository.
 on:
-  push:
-    branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
