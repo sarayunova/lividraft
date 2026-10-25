@@ -38,7 +38,7 @@ fn manage_devices() {
     let mut s = session();
     let n = names(&mut s);
     assert_eq!(n[..3], ["LiVi Draft PDF", "LiVi Draft PNG", "LiVi Draft SVG"], "built-in devices first");
-    let pdf = s.execute("plottermanager", &json!({"action": "get", "name": "lividraft pdf"})).unwrap();
+    let pdf = s.execute("plottermanager", &json!({"action": "get", "name": "livi draft pdf"})).unwrap();
     assert!(pdf["builtin"].as_bool().unwrap());
     let papers = pdf["papers"].as_array().unwrap();
     assert!(papers.iter().any(|p| p["name"] == "ISO B1 (707.00 x 1000.00 MM)"));

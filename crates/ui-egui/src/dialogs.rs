@@ -330,7 +330,7 @@ fn about(ctx: &egui::Context, open: &mut bool) {
                     ui.label(crate::tf!("Version {version}", version = env!("CARGO_PKG_VERSION")));
                     ui.label(crate::tl!("Computer-aided design and drafting: an open-source, clean-room CAD application written in pure Rust."));
                     ui.add_space(6.0);
-                    ui.label(RichText::new(crate::tl!("A LiVi product, based on CADCraft by the ArtCraft Team.")).color(t.text_dim));
+                    ui.label(RichText::new("A LiVi product, based on CADCraft by the ArtCraft Team.").color(t.text_dim));
                     ui.hyperlink_to("contact@liviverse.com", "mailto:contact@liviverse.com");
                     ui.hyperlink_to("www.liviverse.com", "https://www.liviverse.com");
                     ui.add_space(6.0);
