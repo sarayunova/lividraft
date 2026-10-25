@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
-use cadcraft_color::Color;
-use cadcraft_geom::{Vec2, Vec3};
+use lividraft_color::Color;
+use lividraft_geom::{Vec2, Vec3};
 use serde::{Deserialize, Serialize};
 
 use crate::{EntityStore, Lineweight};

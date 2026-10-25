@@ -1,8 +1,8 @@
 //! Shared curve geometry for the M1/M2 draw and modify commands: arc constructions, tangent
 //! circles (TTR/TTT), length parametrisation of curves, spline splitting and picking helpers.
 
-use cadcraft_doc::{Entity, EntityKind, Handle, Prim};
-use cadcraft_geom::{Arc, Circle, EPS, Line, PolyVertex, Polyline, Segment, Spline, TAU, Vec2, circle_circle, line_circle, line_line_infinite};
+use lividraft_doc::{Entity, EntityKind, Handle, Prim};
+use lividraft_geom::{Arc, Circle, EPS, Line, PolyVertex, Polyline, Segment, Spline, TAU, Vec2, circle_circle, line_circle, line_line_infinite};
 
 use crate::{EngineError, Result, Session};
 
@@ -153,7 +153,7 @@ pub fn last_curve_end(s: &Session) -> Option<(Vec2, Vec2)> {
 pub fn bulge_through(a: Vec2, m: Vec2, b: Vec2) -> f64 {
     let Some(arc) = Arc::from_3_points(a, m, b) else { return 0.0 };
     let sw = arc.sweep();
-    if arc.start_point().near(a, 1e-6 * arc.radius.max(1.0)) { cadcraft_geom::arc_to_bulge(sw) } else { cadcraft_geom::arc_to_bulge(-sw) }
+    if arc.start_point().near(a, 1e-6 * arc.radius.max(1.0)) { lividraft_geom::arc_to_bulge(sw) } else { lividraft_geom::arc_to_bulge(-sw) }
 }
 
 /// Bulge of the arc from `a` to `b` leaving `a` along `tangent`.
@@ -164,7 +164,7 @@ pub fn bulge_from_tangent(a: Vec2, b: Vec2, tangent: Vec2) -> f64 {
         return 0.0;
     }
     let alpha = t.cross(c).atan2(t.dot(c));
-    cadcraft_geom::arc_to_bulge(2.0 * alpha)
+    lividraft_geom::arc_to_bulge(2.0 * alpha)
 }
 
 // ---------------- tangent circles ----------------
@@ -433,7 +433,7 @@ impl Chain {
                 tess(pts, p.closed)
             }
             EntityKind::Ellipse(e) => {
-                let ge = cadcraft_geom::Ellipse { center: e.center.xy(), major: e.major.xy(), ratio: e.ratio, start: e.start, end: e.end };
+                let ge = lividraft_geom::Ellipse { center: e.center.xy(), major: e.major.xy(), ratio: e.ratio, start: e.start, end: e.end };
                 let mut pts = Vec::new();
                 ge.tessellate(e.major.xy().len() * 1e-4, &mut pts);
                 tess(pts, ge.is_full())
@@ -492,7 +492,7 @@ impl Chain {
                 p: s.start(),
                 bulge: match s {
                     Segment::Line(_) => 0.0,
-                    Segment::Arc { arc, ccw } => cadcraft_geom::arc_to_bulge(if *ccw { arc.sweep() } else { -arc.sweep() }),
+                    Segment::Arc { arc, ccw } => lividraft_geom::arc_to_bulge(if *ccw { arc.sweep() } else { -arc.sweep() }),
                 },
                 ..Default::default()
             })
@@ -511,7 +511,7 @@ pub fn seg_param(s: &Segment, p: Vec2) -> f64 {
     match s {
         Segment::Line(l) => l.param_of(p).clamp(0.0, 1.0),
         Segment::Arc { arc, ccw } => {
-            let t = (cadcraft_geom::norm_angle(arc.center.angle_to(p) - arc.start) / arc.sweep().max(1e-15)).clamp(0.0, 1.0);
+            let t = (lividraft_geom::norm_angle(arc.center.angle_to(p) - arc.start) / arc.sweep().max(1e-15)).clamp(0.0, 1.0);
             if *ccw { t } else { 1.0 - t }
         }
     }

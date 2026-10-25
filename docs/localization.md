@@ -3,7 +3,7 @@
 Choose **Edit → Interface Language** and select **Auto (system language)**, **English**,
 **Українська**, **Português (Brasil)**, **Deutsch**, **Español**, **Čeština** (Czech), **Русский**, **Français**, **简体中文**, **Italiano**, **한국어** (Korean), **Svenska** (Swedish), **العربية** (Arabic), **Magyar** (Hungarian), **Türkçe** (Turkish), or **Ελληνικά** (Greek).
 The interface updates without restarting, including the native macOS menus.
-The choice is saved with the other interface preferences (`cadcraft.prefs`, beside the theme):
+The choice is saved with the other interface preferences (`lividraft.prefs`, beside the theme):
 eframe storage on the desktop, browser local storage on the web. Installations without a saved
 choice use Auto.
 
@@ -58,7 +58,7 @@ single-form count templates. It covers the reference catalog and every marked UI
 including Options, prompts, dialogs, and tooltips; only **Méretezés / Méret** (Dimension) differs
 between the menu heading and the object label. The interface addresses the user informally, and
 a count takes one form because a Hungarian numeral is followed by the singular. The translation
-was written from the meaning of CADCraft's English strings; no other product's localization was
+was written from the meaning of LiVi Draft's English strings; no other product's localization was
 used as a source. It has not yet been proofread by an independent native speaker.
 
 Turkish has **1,330 rows**: the union of the existing catalogs, four contextual menu headings
@@ -120,7 +120,7 @@ follow-up work.
 The implementation follows the display-time catalog pattern used by
 [VectorCraft #205](https://github.com/storytold/vectorcraft/pull/205),
 [PdfCraft #106](https://github.com/storytold/pdfcraft/pull/106), and
-[FilmCraft #238](https://github.com/storytold/filmcraft/pull/238). Its code is local to CADCraft.
+[FilmCraft #238](https://github.com/storytold/filmcraft/pull/238). Its code is local to LiVi Draft.
 
 - `crates/ui-egui/src/i18n/*.tsv` are UTF-8 with three tab-separated columns:
   `context`, `English source`, and `translation`. Ordinary labels have an empty context.
@@ -144,10 +144,10 @@ The implementation follows the display-time catalog pattern used by
   command needs a row in one language, not in all of them.
 - Catalogs are embedded and parsed once. Missing or malformed rows cannot crash the app;
   tests reject invalid rows, duplicate keys, changed placeholders, and mismatched ellipses.
-- `cargo test -p cadcraft-ui-egui i18n` checks menu/command/tool/snap coverage, every marked
+- `cargo test -p lividraft-ui-egui i18n` checks menu/command/tool/snap coverage, every marked
   UI literal, locale resolution, preferences, integer plurals, bundled glyphs and actual
   egui renders with language switching. `cargo xtask assets` checks asset attribution;
   `cargo xtask ci` runs the workspace quality gates.
 
 Translations are original work under `MIT OR Apache-2.0`, written from the meaning of
-CADCraft's English strings. Do not copy proprietary localization resources.
+LiVi Draft's English strings. Do not copy proprietary localization resources.

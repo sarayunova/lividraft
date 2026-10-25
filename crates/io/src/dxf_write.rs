@@ -5,10 +5,10 @@
 
 use std::collections::HashMap;
 
-use cadcraft_color::Color;
-use cadcraft_doc::*;
-use cadcraft_dxf::{Tag, Version};
-use cadcraft_geom::{Bounds2, Vec2, Vec3};
+use lividraft_color::Color;
+use lividraft_doc::*;
+use lividraft_dxf::{Tag, Version};
+use lividraft_geom::{Bounds2, Vec2, Vec3};
 
 use crate::dxf_ext::{self, DimVal, K};
 
@@ -244,7 +244,7 @@ fn dim_xdata(w: &mut W, dm: &Dimension, cx: &Ctx) {
 /// dimension line's (`base`), in degrees.
 fn oblique_52(w: &mut W, dm: &Dimension, base: f64) {
     if let Some(a) = dm.marks.oblique.filter(|a| a.is_finite()) {
-        w.f(52, cadcraft_geom::norm_angle(a - base).to_degrees());
+        w.f(52, lividraft_geom::norm_angle(a - base).to_degrees());
     }
 }
 
@@ -303,7 +303,7 @@ fn dim_header_vars(w: &mut W, d: &Drawing) {
     let Some(style) = d.dim_styles.iter().find(|s| s.name.eq_ignore_ascii_case(&name)) else { return };
     let v = serde_json::to_value(style).unwrap_or_default();
     let none = |_: &str| None;
-    for (var, field) in cadcraft_doc::DIMVARS {
+    for (var, field) in lividraft_doc::DIMVARS {
         if *var == "DIMSCALE" {
             continue;
         }
@@ -443,7 +443,7 @@ fn layer_and_props(w: &mut W, c: &Common, base: Option<&Common>) {
         Color::ByLayer if write(true, |b| b.color == Color::ByLayer) => w.i(62, 256),
         Color::ByLayer => {}
         Color::True(rgb) => {
-            w.i(62, i64::from(cadcraft_color::nearest_aci(rgb)));
+            w.i(62, i64::from(lividraft_color::nearest_aci(rgb)));
             w.i(420, i64::from(rgb.to_u32()));
         }
         c => w.i(62, i64::from(c.to_aci())),
@@ -513,11 +513,11 @@ fn attrib_flags(a: &Attrib) -> i64 {
 /// from DWG as is (it recomputes it only for DXF): writing the alignment point there drew centred
 /// and right-aligned text from the wrong end in AutoCAD (#1050).
 ///
-/// The stored point is kept when it is close to where CADCraft's font puts the baseline start:
+/// The stored point is kept when it is close to where LiVi Draft's font puts the baseline start:
 /// then it is AutoCAD's own (exact for its fonts). It is replaced when it is clearly stale: the
 /// alignment point itself (text made here) or a text whose length changed since. Close means
 /// along the baseline within a tenth of the text's width plus half its height (AutoCAD's fonts,
-/// or the ones CADCraft substitutes for them, differ most in width, and most on short texts) and
+/// or the ones LiVi Draft substitutes for them, differ most in width, and most on short texts) and
 /// across it within a fifth of its height: Left Middle and Left Bottom text made here, whose
 /// alignment point is only half or a third of a height from the baseline start, must not pass
 /// for AutoCAD's.
@@ -534,7 +534,7 @@ fn text_insert(d: &Drawing, t: &Text) -> Vec3 {
         let width = t.align_pt.map_or(0.0, |a| 2.0 * a.xy().dist(computed.xy()));
         off.len() <= 0.1 * width + 0.5 * h
     } else {
-        let width = cadcraft_fonts::line_width(&t.value, h, t.width_factor.abs());
+        let width = lividraft_fonts::line_width(&t.value, h, t.width_factor.abs());
         off.x.abs() <= 0.1 * width + 0.5 * h && off.y.abs() <= 0.2 * h
     };
     if close { t.insert } else { computed }
@@ -544,8 +544,8 @@ fn computed_text_insert(d: &Drawing, t: &Text) -> Vec3 {
     let justified = !matches!((t.halign, t.valign), (HAlign::Left, VAlign::Baseline) | (HAlign::Aligned | HAlign::Fit, _));
     let Some(a) = t.align_pt.filter(|_| justified) else { return t.insert };
     let ts = d.text_style(&t.style).cloned().unwrap_or_default();
-    let (h, v) = cadcraft_render::text_align(t.halign, t.valign);
-    let p = cadcraft_fonts::TextParams {
+    let (h, v) = lividraft_render::text_align(t.halign, t.valign);
+    let p = lividraft_fonts::TextParams {
         insert: t.insert.xy(),
         align_pt: Some(a.xy()),
         height: t.height,
@@ -557,7 +557,7 @@ fn computed_text_insert(d: &Drawing, t: &Text) -> Vec3 {
         backwards: ts.backwards,
         upside_down: ts.upside_down,
     };
-    let q = cadcraft_fonts::baseline_start(&cadcraft_fonts::TextFont::resolve(&ts.font), &t.value, &p);
+    let q = lividraft_fonts::baseline_start(&lividraft_fonts::TextFont::resolve(&ts.font), &t.value, &p);
     if q.is_finite() { Vec3::new(q.x, q.y, a.z) } else { t.insert }
 }
 
@@ -899,7 +899,7 @@ fn entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bool, cx: &Ctx
             w.s(2, bname);
             w.p(10, dm.defpt);
             let style = d.dim_style(&dm.style).cloned().unwrap_or_default();
-            let g = cadcraft_render::dimension_geometry(dm, &style, d.header.f64("DIMSCALE", 1.0));
+            let g = lividraft_render::dimension_geometry(dm, &style, d.header.f64("DIMSCALE", 1.0));
             w.p(11, if dm.user_text_pos { dm.text_mid } else { g.text_pos.to3(0.0) });
             let ty: i64 = match dm.kind {
                 DimKind::Linear { .. } => 0,
@@ -909,7 +909,7 @@ fn entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bool, cx: &Ctx
                 DimKind::Radius => 4,
                 DimKind::Angular3P => 5,
                 DimKind::Ordinate { x_type } => 6 | if x_type { 64 } else { 0 },
-                // Written as aligned, marked by CADCraft xdata (see `dim_xdata`).
+                // Written as aligned, marked by LiVi Draft xdata (see `dim_xdata`).
                 DimKind::ArcLength => 1,
             };
             w.i(70, ty | 32 | if dm.user_text_pos { 128 } else { 0 });
@@ -995,7 +995,7 @@ fn entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bool, cx: &Ctx
             for c in t.col_widths.iter().take(cols) {
                 w.f(142, *c);
             }
-            let cov = cadcraft_render::table_covered(t);
+            let cov = lividraft_render::table_covered(t);
             let span = |v: u32| i64::from(v.min(i16::MAX as u32));
             for r in 0..rows {
                 for c in 0..cols {
@@ -1124,7 +1124,7 @@ fn entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bool, cx: &Ctx
                 w.i(77, 0);
                 // The lines read from the file, else the library's pattern of that name.
                 let lines = if h.pattern_lines.is_empty() {
-                    cadcraft_doc::library::pattern_for(d, &h.pattern).map(|p| p.lines).unwrap_or_default()
+                    lividraft_doc::library::pattern_for(d, &h.pattern).map(|p| p.lines).unwrap_or_default()
                 } else {
                     h.pattern_lines.clone()
                 };
@@ -1171,13 +1171,13 @@ fn entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bool, cx: &Ctx
                 w.s(340, h.hex());
             }
             // AutoCAD's frozen-layer list: one soft pointer per layer, to its LAYER record. Other
-            // programs read only this; CADCraft prefers its own xdata below when present.
+            // programs read only this; LiVi Draft prefers its own xdata below when present.
             for name in &v.frozen_layers {
                 if let Some(h) = w.layers.get(&name.to_ascii_uppercase()).cloned() {
                     w.s(341, h);
                 }
             }
-            // One CADCraft xdata group holds both lists: readers stop at the first group of an app.
+            // One LiVi Draft xdata group holds both lists: readers stop at the first group of an app.
             if !v.frozen_layers.is_empty() || !v.layer_colors.is_empty() {
                 w.s(1001, dxf_ext::APP);
                 if !v.frozen_layers.is_empty() {
@@ -1229,17 +1229,17 @@ fn entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bool, cx: &Ctx
             w.s(1, &t.text);
             w.p(11, t.dir);
         }
-        // Entity types CADCraft doesn't model aren't written; the save command reports them.
+        // Entity types LiVi Draft doesn't model aren't written; the save command reports them.
         EntityKind::Unknown(_) => {}
     }
 }
 
-/// `$DWGCODEPAGE`: before 2007 the code page read from the file when CADCraft knows it (the text
+/// `$DWGCODEPAGE`: before 2007 the code page read from the file when LiVi Draft knows it (the text
 /// is ASCII with `\U+XXXX` escapes, right in any code page, but the file keeps its declared one);
 /// otherwise, and from 2007 (UTF-8 text), `ANSI_1252`.
 fn code_page(d: &Drawing, version: Version) -> String {
     let read = d.header.get("DWGCODEPAGE").and_then(HVal::as_str).map(str::trim).unwrap_or_default();
-    let known = read.is_ascii() && read.len() <= 32 && cadcraft_dxf::decode_code_page(b"", read).is_some();
+    let known = read.is_ascii() && read.len() <= 32 && lividraft_dxf::decode_code_page(b"", read).is_some();
     if version < Version::R2007 && known { read.to_string() } else { "ANSI_1252".into() }
 }
 
@@ -1281,7 +1281,7 @@ fn gradient(w: &mut W, g: &Gradient) {
         w.f(463, k);
         match c {
             Color::True(rgb) => {
-                w.i(63, i64::from(cadcraft_color::nearest_aci(rgb)));
+                w.i(63, i64::from(lividraft_color::nearest_aci(rgb)));
                 w.i(421, i64::from(rgb.to_u32()));
             }
             c => w.i(63, i64::from(c.to_aci())),
@@ -1386,7 +1386,7 @@ fn reuse_handles(ents: &mut [Entity], old: &Block, taken: &mut std::collections:
 fn dim_block_entities(d: &Drawing, dm: &Dimension, layer: &str) -> Vec<Entity> {
     // The dimension as drawn: its overrides, DIMSCALE (0 = the drawing's) and text font.
     let style = d.dim_style(&dm.style).cloned().unwrap_or_default().with_overrides(&dm.overrides);
-    let g = cadcraft_render::dimension_in(d, dm);
+    let g = lividraft_render::dimension_in(d, dm);
     let mut out = Vec::new();
     // Each part in its style colour (DIMCLRD, DIMCLRE, DIMCLRT), ByBlock when the style says so,
     // as AutoCAD writes them: readers that draw the block drew every part ByBlock, i.e. in the
@@ -1395,7 +1395,7 @@ fn dim_block_entities(d: &Drawing, dm: &Dimension, layer: &str) -> Vec<Entity> {
     let (dim_c, ext_c, text_c) = (in_color(style.dim_line_color), in_color(style.ext_line_color), in_color(style.text_color));
     for (i, l) in g.lines.iter().enumerate() {
         let c = match g.line_roles.get(i) {
-            Some(cadcraft_render::LineRole::Ext) => &ext_c,
+            Some(lividraft_render::LineRole::Ext) => &ext_c,
             _ => &dim_c,
         };
         for seg in l.windows(2) {
@@ -1445,7 +1445,7 @@ fn table_size(t: &Table) -> (usize, usize) {
 /// The block is relative to its own origin: the ACAD_TABLE reference adds the insertion point.
 pub(crate) fn table_block_entities(d: &Drawing, t: &Table, layer: &str) -> Vec<Entity> {
     let at_origin = Table { insert: Vec3::ZERO, ..t.clone() };
-    let g = cadcraft_render::table_geometry(d, &at_origin);
+    let g = lividraft_render::table_geometry(d, &at_origin);
     let c = Common { layer: layer.into(), color: Color::ByBlock, ..Common::default() };
     let mut out = Vec::new();
     for f in &g.fills {
@@ -1491,8 +1491,8 @@ pub(crate) fn table_block_entities(d: &Drawing, t: &Table, layer: &str) -> Vec<E
 }
 
 /// Our own geometry for an arrowhead block: unit size, tip at the origin, pointing along +X.
-fn arrow_block_entities(kind: cadcraft_render::Arrowhead) -> Vec<Entity> {
-    let g = cadcraft_render::arrowhead(kind, Vec2::ZERO, Vec2::X, 1.0);
+fn arrow_block_entities(kind: lividraft_render::Arrowhead) -> Vec<Entity> {
+    let g = lividraft_render::arrowhead(kind, Vec2::ZERO, Vec2::X, 1.0);
     let c = Common { layer: "0".into(), color: Color::ByBlock, ..Common::default() };
     let mut out = Vec::new();
     for l in &g.lines {
@@ -1550,7 +1550,7 @@ pub(crate) fn polyline_vertex_ref(p: &LwPolyline, index: usize) -> Option<(i64, 
 
 /// Standard DIMASSOC point references of an associative dimension: the extension-line
 /// origins of linear/aligned dimensions and the feature point of ordinate dimensions, linked
-/// to objects that exist ([`whole_object_ref`]). CADCraft's exact links travel in xdata as well.
+/// to objects that exist ([`whole_object_ref`]). LiVi Draft's exact links travel in xdata as well.
 fn std_assoc_refs(d: &Drawing, dm: &Dimension) -> (i64, Vec<OsnapRef>) {
     let slots: &[&str] = match dm.kind {
         DimKind::Linear { .. } | DimKind::Aligned => &["p13", "p14"],
@@ -1599,7 +1599,7 @@ fn std_assoc_refs(d: &Drawing, dm: &Dimension) -> (i64, Vec<OsnapRef>) {
 /// Layouts with viewports but without the paper-space viewport (id 1, the sheet itself), keyed
 /// by their first viewport. AutoCAD and DWG take a layout's first viewport as its paper-space
 /// viewport (DWG does not store viewport ids; readers number them in order), so a layout made in
-/// CADCraft, whose paper-space viewport is implicit, gets one written ahead of its viewports.
+/// LiVi Draft, whose paper-space viewport is implicit, gets one written ahead of its viewports.
 fn paper_views(d: &Drawing) -> HashMap<Handle, usize> {
     let mut out = HashMap::new();
     'layouts: for (i, l) in d.layouts.iter().enumerate() {
@@ -1620,11 +1620,11 @@ fn paper_views(d: &Drawing) -> HashMap<Handle, usize> {
 }
 
 /// The paper-space viewport (id 1) of the layout whose first viewport is `e`, if it needs one
-/// ([`paper_views`]): the whole sheet, viewed 1:1. Marked with CADCraft xdata so that our reader
+/// ([`paper_views`]): the whole sheet, viewed 1:1. Marked with LiVi Draft xdata so that our reader
 /// leaves it implicit again.
 fn paper_view(w: &mut W, d: &Drawing, e: &Entity, owner: &str, cx: &Ctx) {
     let Some(l) = cx.paper_views.get(&e.handle).and_then(|i| d.layouts.get(*i)) else { return };
-    let size = cadcraft_render::paper::sheet(d, &l.name).map(|s| s.size).unwrap_or(Vec2::new(12.0, 9.0));
+    let size = lividraft_render::paper::sheet(d, &l.name).map(|s| s.size).unwrap_or(Vec2::new(12.0, 9.0));
     let center = size * 0.5;
     let h = w.h();
     w.s(0, "VIEWPORT");
@@ -1709,7 +1709,7 @@ fn record_head(w: &mut W, kind: &str, owner: &str, subclass: &str) -> String {
 /// Write a drawing as ASCII DXF.
 /// The drawing as R2000 ASCII DXF.
 pub fn write(d: &Drawing) -> String {
-    cadcraft_dxf::write_ascii(&tags(d, Version::R2000))
+    lividraft_dxf::write_ascii(&tags(d, Version::R2000))
 }
 
 /// The drawing's DXF tags, declaring `version` in `$ACADVER`.
@@ -1722,7 +1722,7 @@ pub fn tags(d: &Drawing, version: Version) -> Vec<Tag> {
 pub(crate) fn dwg_bridge(d: &Drawing, dwg: Version) -> String {
     let mut tags = tags_for(d, Version::R2000, dwg);
     bridge_markers(&mut tags);
-    cadcraft_dxf::write_ascii(&tags)
+    lividraft_dxf::write_ascii(&tags)
 }
 
 /// Subclass markers the DWG bridge knows by another spelling (it matches them exactly):
@@ -1904,7 +1904,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
     let group_dict = w.h();
     let layout_dict = w.h();
     let table_style_dict = w.h();
-    // CADCraft data in XRECORDs of the named object dictionary: (key, handle, text chunks).
+    // LiVi Draft data in XRECORDs of the named object dictionary: (key, handle, text chunks).
     let mut xrecords: Vec<(&str, String, Vec<String>)> = Vec::new();
     // The drawing's own next handle: table records and objects are numbered above it, so
     // reading it back (instead of $HANDSEED) keeps their handles across saves (#495).
@@ -1926,10 +1926,10 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
     }
     // The annotation scale list: the ACAD_SCALELIST dictionary of SCALE objects.
     let scale_dict = w.h();
-    let scales: Vec<(&cadcraft_doc::AnnoScale, String)> = d.scales.iter().filter(|s| s.is_valid()).map(|s| (s, w.h())).collect();
+    let scales: Vec<(&lividraft_doc::AnnoScale, String)> = d.scales.iter().filter(|s| s.is_valid()).map(|s| (s, w.h())).collect();
     // Plot style names used by layers and objects (Normal always), each a placeholder object.
     let pstyle_dict = w.h();
-    let mut pstyle_names: Vec<String> = vec![cadcraft_doc::NORMAL_STYLE.to_string()];
+    let mut pstyle_names: Vec<String> = vec![lividraft_doc::NORMAL_STYLE.to_string()];
     let named = d.layers.iter().map(|l| l.plot_style.as_str()).chain(every.iter().map(|e| e.common.plot_style.as_str()));
     for n in named {
         let n = n.trim();
@@ -2060,7 +2060,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
         let xref = if crate::dxf_xref::dependent(&l.name) { 48 } else { 0 };
         w.i(70, i64::from(l.frozen) | if l.vp_freeze_new { 2 } else { 0 } | if l.locked { 4 } else { 0 } | xref);
         let aci = match l.color {
-            Color::True(rgb) => i64::from(cadcraft_color::nearest_aci(rgb)),
+            Color::True(rgb) => i64::from(lividraft_color::nearest_aci(rgb)),
             c => i64::from(c.to_aci()).clamp(1, 255),
         };
         w.i(62, if l.on { aci } else { -aci });
@@ -2072,7 +2072,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
             w.i(290, 0);
         }
         w.i(370, i64::from(l.lineweight.to_dxf()));
-        let normal = w.pstyles.get(&cadcraft_doc::NORMAL_STYLE.to_ascii_uppercase()).cloned();
+        let normal = w.pstyles.get(&lividraft_doc::NORMAL_STYLE.to_ascii_uppercase()).cloned();
         if let Some(h) = w.pstyles.get(&l.plot_style.trim().to_ascii_uppercase()).cloned().or(normal) {
             w.s(390, h);
         }
@@ -2109,9 +2109,9 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
         w.f(50, s.oblique.to_degrees());
         w.i(71, if s.backwards { 2 } else { 0 } | if s.upside_down { 4 } else { 0 });
         w.f(42, 0.2);
-        // The built-in font goes out as `txt`, which every reader has; CADCraft's own name
+        // The built-in font goes out as `txt`, which every reader has; LiVi Draft's own name
         // travels in `CADCRAFT` xdata (`1000 FONT`, name) so the style reopens with it.
-        let file = if s.font == cadcraft_fonts_name() { "txt" } else { s.font.as_str() };
+        let file = if s.font == lividraft_fonts_name() { "txt" } else { s.font.as_str() };
         w.s(3, file);
         w.s(4, &s.big_font);
         if s.annotative {
@@ -2147,7 +2147,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
             *t = Tag::s(340, h.unwrap_or_else(|| fallback_style.clone()));
         }
     }
-    // VIEW: named views (DXF Reference, VIEW). A view's layer state is CADCraft xdata.
+    // VIEW: named views (DXF Reference, VIEW). A view's layer state is LiVi Draft xdata.
     let th = table_head(&mut w, "VIEW", d.views.len());
     for v in &d.views {
         record_head(&mut w, "VIEW", &th, "AcDbViewTableRecord");
@@ -2466,7 +2466,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
         w.group("ACAD_REACTORS", 330, &[&pstyle_dict]);
         w.s(330, pstyle_dict.clone());
     }
-    // Parametric constraints and parameters, saved layer states, plot style tables (CADCraft
+    // Parametric constraints and parameters, saved layer states, plot style tables (LiVi Draft
     // data).
     for (_, h, chunks) in &xrecords {
         w.s(0, "XRECORD");
@@ -2579,7 +2579,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
         }
         w.i(70, plot_flags);
         // Plot paper units: 1 millimetres, 0 inches (#1058).
-        w.i(72, i64::from(cadcraft_render::paper::page_unit_mm(d, page) == 1.0));
+        w.i(72, i64::from(lividraft_render::paper::page_unit_mm(d, page) == 1.0));
         w.i(73, i64::from(page.landscape));
         w.i(74, plot_type);
         w.s(7, &page.plot_style_table);
@@ -2602,7 +2602,7 @@ fn tags_for(d: &Drawing, version: Version, target: Version) -> Vec<Tag> {
         w.p(17, Vec3::new(0.0, 1.0, 0.0));
         w.i(76, 0);
         w.s(330, brh);
-        // The saved paper-space view (centre, height) as CADCraft xdata.
+        // The saved paper-space view (centre, height) as LiVi Draft xdata.
         if let Some((c, height)) = view.filter(|(c, v)| c.x.is_finite() && c.y.is_finite() && v.is_finite()) {
             w.s(1001, dxf_ext::APP);
             w.s(1000, "PSVIEW");
@@ -2711,7 +2711,7 @@ fn table_style_obj(w: &mut W, d: &Drawing, s: &TableStyle, h: &str, dict: &str) 
     w.f(41, s.margin);
     w.i(280, i64::from(!s.title));
     w.i(281, i64::from(!s.header));
-    // Data, column header and title cell styles; CADCraft's complete cell styles in xdata.
+    // Data, column header and title cell styles; LiVi Draft's complete cell styles in xdata.
     for kind in crate::dxf_table::CELL_TYPES {
         let cs = s.cell_style(kind);
         let style = if d.text_style(&cs.text_style).is_some() { cs.text_style.clone() } else { "Standard".to_string() };
@@ -2804,7 +2804,7 @@ fn mleader_style_obj(w: &mut W, s: &MLeaderStyle, h: &str, dict: &str, byblock_l
 
 /// The ACAD_SCALELIST dictionary and its SCALE objects (DXF Reference, OBJECTS section): name
 /// (300), paper units (140), drawing units (141), unit scale flag (290).
-fn scale_list(w: &mut W, scales: &[(&cadcraft_doc::AnnoScale, String)], dict: &str, root: &str) {
+fn scale_list(w: &mut W, scales: &[(&lividraft_doc::AnnoScale, String)], dict: &str, root: &str) {
     w.s(0, "DICTIONARY");
     w.s(5, dict);
     w.group("ACAD_REACTORS", 330, &[root]);
@@ -2825,11 +2825,11 @@ fn scale_list(w: &mut W, scales: &[(&cadcraft_doc::AnnoScale, String)], dict: &s
         w.s(300, dxf_ext::xdata_str(&s.name));
         w.f(140, s.paper_units);
         w.f(141, s.drawing_units);
-        w.i(290, i64::from(cadcraft_doc::same_factor(s.factor(), 1.0)));
+        w.i(290, i64::from(lividraft_doc::same_factor(s.factor(), 1.0)));
     }
 }
 
-fn cadcraft_fonts_name() -> &'static str {
+fn lividraft_fonts_name() -> &'static str {
     "CADCraft Stroke"
 }
 
@@ -2846,7 +2846,7 @@ pub fn entity_groups(d: &Drawing, e: &Entity) -> (String, Vec<Tag>) {
         reactors: HashMap::new(),
     };
     let cx = Ctx { target: Version::R2018, ..Ctx::default() };
-    let paper = d.space_of(e.handle).is_some_and(|s| !matches!(s, cadcraft_doc::Space::Model));
+    let paper = d.space_of(e.handle).is_some_and(|s| !matches!(s, lividraft_doc::Space::Model));
     entity(&mut w, d, e, "0", paper, &cx);
     let mut tags = w.t.into_iter();
     let kind = tags.next().filter(|t| t.code == 0).map(|t| t.value.as_str()).unwrap_or_default();

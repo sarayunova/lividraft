@@ -1,11 +1,11 @@
 //! Grip dimensional input (#519): while one grip is stretched, the dimensions it changes can be
 //! typed (DYNDIVIS, DYNDIGRIP).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{EntityKind, Handle};
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::grip_dims::{GripDimKind, grip_dims, resolve};
-use cadcraft_engine::{Input, sysvars};
+use lividraft_engine::Session;
+use lividraft_engine::doc::{EntityKind, Handle};
+use lividraft_engine::geom::Vec2;
+use lividraft_engine::grip_dims::{GripDimKind, grip_dims, resolve};
+use lividraft_engine::{Input, sysvars};
 use serde_json::json;
 
 fn handle(r: serde_json::Value) -> Handle {

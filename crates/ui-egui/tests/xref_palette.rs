@@ -1,14 +1,14 @@
 //! The External References palette (#525): XREF opens it; its rows and buttons act through the
 //! engine's -XREF commands.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::geom::Vec3;
-use cadcraft_engine::doc::{Drawing, Entity, EntityKind, Handle, Layer, Line, XrefStatus};
-use cadcraft_ui_egui::{CadApp, Services, docking::Panel};
 use egui::vec2;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use lividraft_engine::Session;
+use lividraft_engine::cmd::file::{IoHooks, set_io};
+use lividraft_engine::doc::geom::Vec3;
+use lividraft_engine::doc::{Drawing, Entity, EntityKind, Handle, Layer, Line, XrefStatus};
+use lividraft_ui_egui::{CadApp, Services, docking::Panel};
 use serde_json::json;
 
 /// Test drawings: any file holds one line on layer Walls.
@@ -22,7 +22,7 @@ fn read(_bytes: &[u8], _name: &str) -> Result<Drawing, String> {
 }
 
 fn site_file() -> String {
-    let dir = std::env::temp_dir().join(format!("cadcraft-xref-palette-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("lividraft-xref-palette-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let p = dir.join("site.dxf");
     std::fs::write(&p, "site").unwrap();

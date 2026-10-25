@@ -1,6 +1,6 @@
 [package]
-name = "cadcraft-io"
-description = "CADCraft file formats: DXF read/write mapping, SVG, PNG and PDF export"
+name = "lividraft-io"
+description = "LiVi Draft file formats: DXF read/write mapping, SVG, PNG and PDF export"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,13 +9,13 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-cadcraft-geom = { workspace = true }
-cadcraft-color = { workspace = true }
-cadcraft-doc = { workspace = true }
-cadcraft-dxf = { workspace = true }
-cadcraft-dwg = { workspace = true }
-cadcraft-render = { workspace = true }
-cadcraft-fonts = { workspace = true }
+lividraft-geom = { workspace = true }
+lividraft-color = { workspace = true }
+lividraft-doc = { workspace = true }
+lividraft-dxf = { workspace = true }
+lividraft-dwg = { workspace = true }
+lividraft-render = { workspace = true }
+lividraft-fonts = { workspace = true }
 thiserror = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
@@ -23,6 +23,6 @@ miniz_oxide = "0.9"
 quick-xml = { workspace = true }
 
 [dev-dependencies]
-# Reads CADCraft's DWG output as written (tests only; the same version as cadcraft-dwg's).
+# Reads LiVi Draft's DWG output as written (tests only; the same version as lividraft-dwg's).
 acadrust = "0.6.5"
 tiny-skia = { workspace = true }

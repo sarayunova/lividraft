@@ -10,11 +10,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use cadcraft_color::Rgb;
-use cadcraft_doc::{Drawing, Entity, EntityKind, PageSetup, Space};
-use cadcraft_geom::{Bounds2, Mat3, Vec2};
-use cadcraft_render::paper::{self, Sheet};
-use cadcraft_render::raster::{RasterOptions, View};
+use lividraft_color::Rgb;
+use lividraft_doc::{Drawing, Entity, EntityKind, PageSetup, Space};
+use lividraft_geom::{Bounds2, Mat3, Vec2};
+use lividraft_render::paper::{self, Sheet};
+use lividraft_render::raster::{RasterOptions, View};
 use serde_json::{Value, json};
 
 use super::file::{base64_decode, base64_encode, io};
@@ -64,7 +64,7 @@ pub fn specs() -> Vec<CommandSpec> {
         })
         .params("not available yet")
         .noundo(),
-        CommandSpec::new("3dorbit", "Orbit", |_, _| Err(EngineError::Other("3DORBIT is not available yet: CADCraft draws in 2D (plan view) only".into())))
+        CommandSpec::new("3dorbit", "Orbit", |_, _| Err(EngineError::Other("3DORBIT is not available yet: LiVi Draft draws in 2D (plan view) only".into())))
             .alias(&["3do", "orbit"])
             .params("not available yet")
             .noundo(),
@@ -80,7 +80,7 @@ fn write_file(cmd: &str, path: &str, bytes: &[u8]) -> Result<()> {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Exclusively create a fresh temporary file and rename it into place so a planted
-        // `<path>.cadcraft-tmp` symlink cannot redirect the export write (CWE-59).
+        // `<path>.lividraft-tmp` symlink cannot redirect the export write (CWE-59).
         crate::atomic_write::write_atomic(std::path::Path::new(path), bytes).map_err(|e| bad(cmd, format!("{path}: {e}")))
     }
     #[cfg(target_arch = "wasm32")]
@@ -327,7 +327,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
     // Curves are flattened to about half a pixel.
     let est = plot_scale(&d.extents(&space), &sheet, fit, scale);
     let tol = 0.5 / (px_per_paper_unit * est);
-    let ropts = cadcraft_render::Options {
+    let ropts = lividraft_render::Options {
         tolerance: if tol.is_finite() && tol > 0.0 { tol } else { 0.01 },
         min_dash: 0.0,
         text: true,
@@ -336,7 +336,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
         transparency,
         ..Default::default()
     };
-    let list = cadcraft_render::build_plot(d, &space, &ropts);
+    let list = lividraft_render::build_plot(d, &space, &ropts);
     let b = list.bounds;
     // Paper point q shows drawing point (q - to) / k + from.
     let (from, k, to) = if fit || space == Space::Model {
@@ -357,7 +357,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
         px_per_mm: if lineweights && px_per_mm.is_finite() { px_per_mm } else { 0.0 },
         antialias: true,
     };
-    let png = cadcraft_render::raster::render_png(&list, &view, &ro).ok_or_else(|| bad("preview", "rendering the preview failed"))?;
+    let png = lividraft_render::raster::render_png(&list, &view, &ro).ok_or_else(|| bad("preview", "rendering the preview failed"))?;
     let layout = space.tab_name();
     Ok(json!({ "data": base64_encode(&png), "width": w, "height": h, "layout": layout, "paper": page.paper, "landscape": page.landscape }))
 }
@@ -437,7 +437,7 @@ struct Frame {
 
 /// The ISO/ANSI paper a frame of `w` x `h` mm fits (either orientation), and whether it is landscape.
 fn paper_for(w: f64, h: f64) -> Option<(&'static str, bool)> {
-    cadcraft_render::PAPER_SIZES.iter().find_map(|p| {
+    lividraft_render::PAPER_SIZES.iter().find_map(|p| {
         let (pw, ph) = (p.width_mm, p.height_mm);
         if (pw - w).abs() <= FRAME_TOL_MM && (ph - h).abs() <= FRAME_TOL_MM {
             Some((p.name, false))
@@ -458,7 +458,7 @@ fn frame_books(d: &Drawing, frame_height: f64, unit: f64) -> (Vec<Vec<Frame>>, u
         if !pl.closed {
             continue;
         }
-        let b = cadcraft_doc::entity_bounds(d, e, 0);
+        let b = lividraft_doc::entity_bounds(d, e, 0);
         if b.is_empty() || !b.width().is_finite() || !b.height().is_finite() {
             continue;
         }
@@ -539,8 +539,8 @@ fn run_pdfbook(s: &mut Session, p: &Value) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_doc::{Block, Circle, Common, Handle, Insert, Layer, Line};
-    use cadcraft_geom::Vec3;
+    use lividraft_doc::{Block, Circle, Common, Handle, Insert, Layer, Line};
+    use lividraft_geom::Vec3;
 
     use super::super::file::{IoHooks, set_io};
     use super::*;
@@ -570,7 +570,7 @@ mod tests {
     }
 
     fn temp(name: &str) -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("cadcraft-exchange-{}-{name}", std::process::id()))
+        std::env::temp_dir().join(format!("lividraft-exchange-{}-{name}", std::process::id()))
     }
 
     #[test]

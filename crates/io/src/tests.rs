@@ -1,6 +1,6 @@
-use cadcraft_color::Color;
-use cadcraft_doc::*;
-use cadcraft_geom::{PolyVertex, Vec2, Vec3};
+use lividraft_color::Color;
+use lividraft_doc::*;
+use lividraft_geom::{PolyVertex, Vec2, Vec3};
 
 use crate::*;
 
@@ -72,7 +72,7 @@ fn sample() -> Drawing {
     d.add(
         &Space::Model,
         c("0"),
-        EntityKind::Spline(cadcraft_geom::Spline::from_fit_points(&[Vec2::ZERO, Vec2::new(1.0, 2.0), Vec2::new(3.0, 1.0), Vec2::new(4.0, 3.0)])),
+        EntityKind::Spline(lividraft_geom::Spline::from_fit_points(&[Vec2::ZERO, Vec2::new(1.0, 2.0), Vec2::new(3.0, 1.0), Vec2::new(4.0, 3.0)])),
     )
     .unwrap();
     d.add(
@@ -343,7 +343,7 @@ fn hostile_dxf_does_not_panic() {
         "0\nSECTION\n2\nENTITIES\n0\nLWPOLYLINE\n42\n5\n20\n1\n0\nENDSEC\n0\nEOF\n",
     ] {
         if let Ok(d) = read(t.as_bytes(), "x.dxf") {
-            let _ = cadcraft_render::build(&d, &Space::Model, &cadcraft_render::Options::default());
+            let _ = lividraft_render::build(&d, &Space::Model, &lividraft_render::Options::default());
             let _ = d.extents(&Space::Model);
         }
     }
@@ -365,7 +365,7 @@ fn view_box(svg: &str) -> String {
 
 #[test]
 fn image_export_frames_window() {
-    use cadcraft_geom::Bounds2;
+    use lividraft_geom::Bounds2;
     let d = sample();
     let win = Bounds2::new(Vec2::new(1.0, 2.0), Vec2::new(31.0, 22.0));
     // SVG: the viewBox is exactly the window (no margin); the default still fits the extents.
@@ -374,14 +374,14 @@ fn image_export_frames_window() {
     assert_eq!(view_box(&framed), "0 0 30.000000 20.000000");
     assert_ne!(view_box(&framed), view_box(&plain));
     assert_eq!(plain, String::from_utf8(write_framed(&d, "a.svg", None).unwrap()).unwrap());
-    let ext = cadcraft_render::build(&d, &Space::Model, &cadcraft_render::Options::default()).bounds;
+    let ext = lividraft_render::build(&d, &Space::Model, &lividraft_render::Options::default()).bounds;
     let m = ext.width().max(ext.height()) * 0.02;
     assert_eq!(view_box(&plain), format!("0 0 {:.6} {:.6}", ext.width() + 2.0 * m, ext.height() + 2.0 * m));
     // PNG: the window fills the 3:2 image exactly, centred.
     let v = png_view(&ext, 2400, 1600, Some(win));
     assert_eq!(v.center, Vec2::new(16.0, 12.0));
     assert!((v.scale - 80.0).abs() < 1e-9);
-    assert_eq!(png_view(&ext, 2400, 1600, None), cadcraft_render::raster::View::fit(&ext, 2400, 1600, 0.05));
+    assert_eq!(png_view(&ext, 2400, 1600, None), lividraft_render::raster::View::fit(&ext, 2400, 1600, 0.05));
     let png_framed = write_framed(&d, "a.png", Some(win)).unwrap();
     assert_eq!(&png_framed[1..4], b"PNG");
     assert_ne!(png_framed, write(&d, "a.png").unwrap());
@@ -395,7 +395,7 @@ fn image_export_frames_window() {
 
 #[test]
 fn hostile_export_window_is_an_error() {
-    use cadcraft_geom::Bounds2;
+    use lividraft_geom::Bounds2;
     let d = sample();
     let raw = |x0: f64, y0: f64, x1: f64, y1: f64| Bounds2 { min: Vec2::new(x0, y0), max: Vec2::new(x1, y1) };
     let bad = [
@@ -544,7 +544,7 @@ fn pdf_hostile_options_and_empty() {
 #[test]
 fn dxf_roundtrips_page_setup() {
     let mut d = sample();
-    let a3 = cadcraft_render::paper_size("A3").unwrap();
+    let a3 = lividraft_render::paper_size("A3").unwrap();
     {
         let p = &mut d.layouts[0].page;
         p.paper = a3.name.into();
@@ -715,7 +715,7 @@ fn viewport_frozen_layers_written_as_341_handles() {
 fn viewport_frozen_layers_read_from_341_without_xdata() {
     let (_, p) = frozen_vp_dxf();
     let r = vp_record(&p, "2");
-    // Strip the CADCraft xdata, and add a 341 to a handle that names no layer.
+    // Strip the LiVi Draft xdata, and add a 341 to a handle that names no layer.
     let x = p[r.clone()].iter().position(|(c, _)| c == "1001").unwrap() + r.start;
     let mut q: Vec<(String, String)> = p[..r.start].to_vec();
     let mut head = p[r.start..x].to_vec();
@@ -748,7 +748,7 @@ fn viewport_frozen_layers_survive_dwg() {
     let dwg = write(&d, "t.dwg").unwrap();
     let back = read(&dwg, "t.dwg").unwrap();
     assert_eq!(viewport_frozen(&back, 2), vec!["Walls".to_string(), "A B".to_string()]);
-    // Survives via the CADCraft xdata: the DWG converter does not yet carry group 341 itself.
+    // Survives via the LiVi Draft xdata: the DWG converter does not yet carry group 341 itself.
 }
 
 #[test]
@@ -770,10 +770,10 @@ fn viewport_layer_colors_roundtrip() {
             on: true,
         })
     };
-    let colors = vec![("Walls".to_string(), Color::Index(5)), ("A B".to_string(), Color::True(cadcraft_color::Rgb(255, 128, 0)))];
+    let colors = vec![("Walls".to_string(), Color::Index(5)), ("A B".to_string(), Color::True(lividraft_color::Rgb(255, 128, 0)))];
     d.add(&paper, Common::default(), vp(2, Vec::new(), colors.clone())).unwrap();
     d.add(&paper, Common::default(), vp(3, Vec::new(), Vec::new())).unwrap();
-    // Frozen layers and colour overrides share one CADCraft xdata group.
+    // Frozen layers and colour overrides share one LiVi Draft xdata group.
     d.add(&paper, Common::default(), vp(4, vec!["Walls".into()], colors.clone())).unwrap();
     let back = roundtrip(&d);
     let found: Vec<(u32, Vec<String>, Vec<(String, Color)>)> = back
@@ -935,8 +935,8 @@ fn many_entities(n: usize) -> Drawing {
 #[cfg(not(target_arch = "wasm32"))]
 fn ac1024_dwg(n: usize) -> Vec<u8> {
     let dxf = write_dxf(&many_entities(n)).replacen("AC1015", "AC1024", 1);
-    let dwg = cadcraft_dwg::dxf_to_dwg(dxf.as_bytes()).unwrap();
-    assert_eq!(cadcraft_dwg::version(&dwg).as_deref(), Some("AC1024"));
+    let dwg = lividraft_dwg::dxf_to_dwg(dxf.as_bytes()).unwrap();
+    assert_eq!(lividraft_dwg::version(&dwg).as_deref(), Some("AC1024"));
     dwg
 }
 
@@ -948,8 +948,8 @@ fn ac1024_dwg(n: usize) -> Vec<u8> {
 fn ac1024_dwg_with_many_entities_opens() {
     let n = 30_000;
     let dwg = ac1024_dwg(n);
-    let dxf = cadcraft_dwg::dwg_to_dxf(&dwg).unwrap();
-    let tags = cadcraft_dxf::parse(&dxf).unwrap().len();
+    let dxf = lividraft_dwg::dwg_to_dxf(&dwg).unwrap();
+    let tags = lividraft_dxf::parse(&dxf).unwrap().len();
     assert!(dxf.len() < dwg.len() * 20, "DXF {} bytes from {} DWG bytes", dxf.len(), dwg.len());
     assert!(tags < dwg.len(), "{tags} group codes from {} DWG bytes", dwg.len());
     let d = read(&dwg, "big.dwg").unwrap();
@@ -965,21 +965,21 @@ fn ac1024_dwg_with_many_entities_opens() {
 #[test]
 fn oversized_dwg_and_dxf_are_rejected_early() {
     let dwg = ac1024_dwg(3000);
-    let full = cadcraft_dwg::dwg_to_dxf(&dwg).unwrap().len();
+    let full = lividraft_dwg::dwg_to_dxf(&dwg).unwrap().len();
     assert!(full > 400_000, "{full}");
-    let limits = cadcraft_dwg::Limits { max_dxf_bytes: 300_000, ..cadcraft_dwg::Limits::DEFAULT };
-    let e = cadcraft_dwg::dwg_to_dxf_with(&dwg, limits).unwrap_err();
+    let limits = lividraft_dwg::Limits { max_dxf_bytes: 300_000, ..lividraft_dwg::Limits::DEFAULT };
+    let e = lividraft_dwg::dwg_to_dxf_with(&dwg, limits).unwrap_err();
     assert!(e.starts_with("DWG: converting this 0."), "{e}");
     assert!(e.contains("MB file produced more than 0.3 MB of drawing data (the limit)"), "{e}");
 
-    let limits = cadcraft_dwg::Limits { max_dwg_bytes: 100_000, ..cadcraft_dwg::Limits::DEFAULT };
-    let e = cadcraft_dwg::dwg_to_dxf_with(&dwg, limits).unwrap_err();
-    assert!(e.starts_with("DWG: the file is 0.") && e.ends_with("MB, larger than the 0.1 MB CADCraft opens"), "{e}");
+    let limits = lividraft_dwg::Limits { max_dwg_bytes: 100_000, ..lividraft_dwg::Limits::DEFAULT };
+    let e = lividraft_dwg::dwg_to_dxf_with(&dwg, limits).unwrap_err();
+    assert!(e.starts_with("DWG: the file is 0.") && e.ends_with("MB, larger than the 0.1 MB LiVi Draft opens"), "{e}");
 
     // Lines that aren't even group codes: the size is reported before anything is parsed.
     let text = "not a group code\nx\n".repeat(60);
-    let e = cadcraft_dxf::parse_with_limit(text.as_bytes(), 50).unwrap_err();
-    assert_eq!(e.to_string(), "drawing too large: 60 DXF group codes, more than the 50 CADCraft reads");
+    let e = lividraft_dxf::parse_with_limit(text.as_bytes(), 50).unwrap_err();
+    assert_eq!(e.to_string(), "drawing too large: 60 DXF group codes, more than the 50 LiVi Draft reads");
 }
 
 /// Issue #800: one unreadable object record doesn't fail the whole DWG. The reader skips it, the
@@ -1067,9 +1067,9 @@ fn dimension_associativity_roundtrips() {
     assert_eq!(back.model.len(), d.model.len());
     assert!(back.layouts.iter().all(|l| l.entities.is_empty()));
 
-    // Without CADCraft's xdata (a file from another writer), the standard DIMASSOC objects
+    // Without LiVi Draft's xdata (a file from another writer), the standard DIMASSOC objects
     // still give the extension-line links.
-    let tags = cadcraft_dxf::parse(text.as_bytes()).unwrap();
+    let tags = lividraft_dxf::parse(text.as_bytes()).unwrap();
     let mut stripped = Vec::new();
     let mut skipping = false;
     for t in tags {
@@ -1082,13 +1082,13 @@ fn dimension_associativity_roundtrips() {
             stripped.push(t);
         }
     }
-    let foreign = read_dxf(cadcraft_dxf::write_ascii(&stripped).as_bytes()).unwrap();
+    let foreign = read_dxf(lividraft_dxf::write_ascii(&stripped).as_bytes()).unwrap();
     assert_eq!(assoc_of(&foreign, hl), lin.assoc);
     let fa = assoc_of(&foreign, ha);
     assert_eq!(fa.len(), 2);
     assert_eq!(fa[1], ali.assoc[1], "the polyline vertex, named by its segment (#1049)");
     assert!(matches!(fa[0].snap, AssocSnap::OnCircle { angle } if angle.abs() < 1e-9));
-    assert!(assoc_of(&foreign, hr).is_empty(), "radial links are CADCraft-only");
+    assert!(assoc_of(&foreign, hr).is_empty(), "radial links are LiVi Draft-only");
 }
 
 /// #1049: a polyline vertex is referenced as AutoCAD does: an end of one of its segments,
@@ -1155,7 +1155,7 @@ fn polyline_vertex_dimensions_round_trip_by_segment() {
     ];
     let hp = d.add(&Space::Model, c(), EntityKind::Dimension(on_pl.clone())).unwrap();
     let text = write_dxf(&d);
-    let tags = cadcraft_dxf::parse(text.as_bytes()).unwrap();
+    let tags = lividraft_dxf::parse(text.as_bytes()).unwrap();
     // Each reference to the polyline: (72, 73, 91).
     let refs: Vec<(i64, i64, i64)> = tags
         .iter()
@@ -1169,7 +1169,7 @@ fn polyline_vertex_dimensions_round_trip_by_segment() {
         .collect();
     assert_eq!(refs, [(13, 2, 1), (1, 2, 3)]);
 
-    // Without CADCraft's xdata and with the reference points at 0,0 (as AutoCAD writes them),
+    // Without LiVi Draft's xdata and with the reference points at 0,0 (as AutoCAD writes them),
     // the segments still give the vertices.
     let mut stripped = Vec::new();
     let mut skipping = false;
@@ -1184,13 +1184,13 @@ fn polyline_vertex_dimensions_round_trip_by_segment() {
             in_ref = t.str() == "AcDbOsnapPointRef";
         }
         if in_ref && matches!(t.code, 10 | 20) {
-            t = cadcraft_dxf::Tag::new(t.code, cadcraft_dxf::Value::Real(0.0));
+            t = lividraft_dxf::Tag::new(t.code, lividraft_dxf::Value::Real(0.0));
         }
         if !skipping {
             stripped.push(t);
         }
     }
-    let foreign = read_dxf(cadcraft_dxf::write_ascii(&stripped).as_bytes()).unwrap();
+    let foreign = read_dxf(lividraft_dxf::write_ascii(&stripped).as_bytes()).unwrap();
     match &foreign.entity(hp).unwrap().kind {
         EntityKind::Dimension(x) => assert_eq!(x.assoc, on_pl.assoc),
         _ => panic!(),
@@ -1279,7 +1279,7 @@ fn layer_states_roundtrip_next_to_constraints() {
     let (constraints, _) = parametric_sample(&mut d);
     d.layers.push(Layer {
         name: "Wände".into(),
-        color: Color::True(cadcraft_color::Rgb(200, 10, 40)),
+        color: Color::True(lividraft_color::Rgb(200, 10, 40)),
         transparency: 30,
         description: "walls \\ hidden".into(),
         ..Layer::default()
@@ -1498,7 +1498,7 @@ fn non_ascii_text_is_escaped_for_r2000_and_roundtrips() {
     let d = intl_sample();
     let text = write_dxf(&d);
     assert!(text.is_ascii(), "an AC1015 DXF must not contain UTF-8 bytes");
-    let tags = cadcraft_dxf::parse(text.as_bytes()).unwrap();
+    let tags = lividraft_dxf::parse(text.as_bytes()).unwrap();
     let header = |name: &str| tags.windows(2).find(|w| w[0].code == 9 && w[0].str() == name).map(|w| w[1].str());
     assert_eq!(header("$ACADVER").as_deref(), Some("AC1015"));
     assert_eq!(header("$DWGCODEPAGE").as_deref(), Some("ANSI_1252"));
@@ -1568,7 +1568,7 @@ fn hostile_extension_data_never_panics() {
     ];
     for t in &cases {
         if let Ok(d) = read(t.as_bytes(), "x.dxf") {
-            let _ = cadcraft_render::build(&d, &Space::Model, &cadcraft_render::Options::default());
+            let _ = lividraft_render::build(&d, &Space::Model, &lividraft_render::Options::default());
             let _ = write_dxf(&d);
         }
     }
@@ -1656,7 +1656,7 @@ fn dwg_roundtrip_keeps_extension_data() {
 #[test]
 fn mleader_is_written_as_multileader() {
     let mut d = Drawing::new_metric();
-    let text = cadcraft_doc::MText {
+    let text = lividraft_doc::MText {
         insert: Vec3::new(12.0, 5.0, 0.0),
         height: 2.5,
         width: 0.0,
@@ -1668,7 +1668,7 @@ fn mleader_is_written_as_multileader() {
         line_spacing_exact: false,
         columns: None,
     };
-    let m = cadcraft_doc::MLeader {
+    let m = lividraft_doc::MLeader {
         leaders: vec![vec![Vec3::new(0.0, 0.0, 0.0)]],
         landing: Vec3::new(10.0, 5.0, 0.0),
         dogleg: 2.0,
@@ -1783,8 +1783,8 @@ fn arc_length_dimension_keeps_its_kind_and_centre_on_roundtrip() {
         _ => panic!("not a dimension"),
     }
     // And through DWG.
-    let dwg = cadcraft_dwg::dxf_to_dwg(text.as_bytes()).unwrap();
-    let back = read_dxf(&cadcraft_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
+    let dwg = lividraft_dwg::dxf_to_dwg(text.as_bytes()).unwrap();
+    let back = read_dxf(&lividraft_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
     let dims: Vec<_> = back.model.iter().filter_map(|e| if let EntityKind::Dimension(x) = &e.kind { Some(x.clone()) } else { None }).collect();
     assert_eq!(dims.len(), 1);
     assert!(matches!(dims[0].kind, DimKind::ArcLength), "{:?}", dims[0].kind);
@@ -1804,8 +1804,8 @@ fn gradient_sample() -> (Drawing, Vec<Option<Gradient>>) {
     let gradients = vec![
         Some(Gradient {
             name: "LINEAR".into(),
-            color1: Color::True(cadcraft_color::Rgb(255, 0, 0)),
-            color2: Color::True(cadcraft_color::Rgb(0, 0, 255)),
+            color1: Color::True(lividraft_color::Rgb(255, 0, 0)),
+            color2: Color::True(lividraft_color::Rgb(0, 0, 255)),
             angle: 30f64.to_radians(),
             centered: false,
         }),
@@ -1855,7 +1855,7 @@ fn gradient_hatch_roundtrips_through_dxf() {
     assert_eq!(roundtrip(&back).model.iter().map(|e| &e.kind).collect::<Vec<_>>(), back.model.iter().map(|e| &e.kind).collect::<Vec<_>>());
 }
 
-/// R2000 readers and DWG conversions drop the native groups; CADCraft's xdata copy restores the
+/// R2000 readers and DWG conversions drop the native groups; LiVi Draft's xdata copy restores the
 /// gradient. When native groups are present (another program may have edited them) they win.
 #[test]
 fn gradient_falls_back_to_xdata_and_native_groups_win() {
@@ -1884,7 +1884,7 @@ fn gradient_falls_back_to_xdata_and_native_groups_win() {
     let back = read_dxf(edited.as_bytes()).unwrap();
     let g = hatches(&back).into_iter().next().and_then(|h| h.gradient).unwrap();
     assert_eq!(g.name, "SPHERICAL");
-    assert_eq!(g.color1, Color::True(cadcraft_color::Rgb(0, 255, 0)));
+    assert_eq!(g.color1, Color::True(lividraft_color::Rgb(0, 255, 0)));
 }
 
 /// Issue #80: DWG saves (R2000, which has no native gradient fields) keep the gradient too.
@@ -1926,7 +1926,7 @@ fn hostile_gradient_groups_never_panic() {
                 assert!(g.angle.is_finite());
             }
         }
-        let _ = cadcraft_render::build(&d, &Space::Model, &cadcraft_render::Options::default());
+        let _ = lividraft_render::build(&d, &Space::Model, &lividraft_render::Options::default());
         let back = read_dxf(write_dxf(&d).as_bytes()).unwrap();
         assert_eq!(
             hatches(&back).into_iter().map(|h| h.gradient).collect::<Vec<_>>(),
@@ -2003,7 +2003,7 @@ fn autocad_header_dim_variables_are_not_overrides() {
     assert_eq!(back.header.str("DIMDSEP", ""), ",");
     assert!(back.header.get("DIMTXT").is_some() && back.header.get("DIMCLRD").is_some());
     assert_eq!(back.dim_overrides(), serde_json::Map::new());
-    // A variable that really differs from the style is an override. CADCraft writes the current
+    // A variable that really differs from the style is an override. LiVi Draft writes the current
     // style's variables in the header too (#1051), so both copies change.
     let text = text.replacen("$DIMDEC\r\n70\r\n3\r\n", "$DIMDEC\r\n70\r\n5\r\n", 1).replacen("$DIMDEC\r\n 70\r\n3\r\n", "$DIMDEC\r\n 70\r\n5\r\n", 1);
     assert_eq!(read_dxf(text.as_bytes()).unwrap().dim_overrides().get("decimals"), Some(&serde_json::json!(5)));
@@ -2109,7 +2109,7 @@ fn mirrored_text_extrusion_keeps_its_footprint() {
     assert!(t.rotation.abs() < 1e-12, "{}", t.rotation);
     let a = t.align_pt.expect("right-justified text has an alignment point");
     assert!((a.x - 10.0).abs() < 1e-9 && (a.y - 5.0).abs() < 1e-9, "{a:?}");
-    let list = cadcraft_render::build(&d, &Space::Model, &cadcraft_render::Options::default());
+    let list = lividraft_render::build(&d, &Space::Model, &lividraft_render::Options::default());
     assert!((list.bounds.max.x - 10.0).abs() < 1e-6 && list.bounds.min.x < 9.5, "drawn left of (10,5): {:?}", list.bounds);
 }
 
@@ -2124,7 +2124,7 @@ fn mirrored_mtext_extrusion_keeps_its_footprint() {
     let t = first(&d, |k| if let EntityKind::MText(t) = k { Some(t.clone()) } else { None });
     assert_eq!(t.attach, 3);
     assert!((t.rotation - std::f64::consts::PI).abs() < 1e-12, "{}", t.rotation);
-    let b = cadcraft_render::build(&d, &Space::Model, &cadcraft_render::Options::default()).bounds;
+    let b = lividraft_render::build(&d, &Space::Model, &lividraft_render::Options::default()).bounds;
     assert!(b.min.x > -0.2 && b.max.x > 0.5 && b.min.y > -0.2 && b.max.y > 0.5, "box right of and above (0,0): {b:?}");
 }
 
@@ -2259,7 +2259,7 @@ fn svg_left_out_content_is_noted() {
     assert_eq!(kinds(&d), ["Polyline", "Polyline"]);
     assert_eq!(
         d.read_notes,
-        ["SVG: CADCraft doesn't read these yet, so they were left out: 2 texts, 1 raster image, 2 `<use>` copies, \
+        ["SVG: LiVi Draft doesn't read these yet, so they were left out: 2 texts, 1 raster image, 2 `<use>` copies, \
           1 `<style>` sheet (its class rules aren't applied), 1 rectangle with rounded corners (drawn square)"]
     );
     let plain = read(format!("{SVG_PAGE}<rect x=\"1\" y=\"1\" width=\"4\" height=\"3\"/></svg>").as_bytes(), "a.svg").unwrap();
@@ -2502,7 +2502,7 @@ fn pdf_strokes_each_transparent_primitive_inside_a_block() {
 
 #[test]
 fn foreign_table_reads_cell_text_height_and_keeps_style_scale() {
-    // A table from another writer: no CADCraft xdata; cell 1 sets 140 before its value block
+    // A table from another writer: no LiVi Draft xdata; cell 1 sets 140 before its value block
     // (the cell's text height), cell 2 only has a 140 inside the value block (a number).
     let dxf = "0\nSECTION\n2\nENTITIES\n0\nACAD_TABLE\n100\nAcDbTable\n91\n1\n92\n2\n141\n300\n142\n900\n142\n900\n\
         171\n1\n140\n150\n301\nCELL_VALUE\n1\nA\n304\nACVALUE_END\n\

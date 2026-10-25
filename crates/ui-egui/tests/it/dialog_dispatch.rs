@@ -3,8 +3,8 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services, menus};
+use lividraft_engine::Session;
+use lividraft_ui_egui::{CadApp, Services, menus};
 use serde_json::json;
 
 /// An app whose file pickers count their calls and cancel.

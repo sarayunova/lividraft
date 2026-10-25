@@ -1,10 +1,10 @@
-//! Another program's file can name a $HANDSEED below handles it uses. Entities CADCraft makes
+//! Another program's file can name a $HANDSEED below handles it uses. Entities LiVi Draft makes
 //! while reading (the faces a polyface mesh becomes) must not take handles that records further
 //! on still have: a DWG keeps one object per handle, so the duplicates were lost on save.
 
 use std::collections::HashSet;
 
-use cadcraft_doc::{Drawing, EntityKind, Handle};
+use lividraft_doc::{Drawing, EntityKind, Handle};
 
 /// A block holding a polyface mesh of three triangles (handle 2000) and, in model space after it,
 /// lines with handles 2001–2003 (the next ones after the mesh's), under a $HANDSEED of 10. The
@@ -41,7 +41,7 @@ fn counts(d: &Drawing) -> (usize, usize) {
 
 #[test]
 fn faces_made_while_reading_do_not_take_the_files_handles() {
-    let d = cadcraft_io::read_dxf(dxf().as_bytes()).unwrap();
+    let d = lividraft_io::read_dxf(dxf().as_bytes()).unwrap();
     assert_eq!(counts(&d), (3, 3));
     let handles: Vec<Handle> = d.model.iter().chain(d.block("MESH").unwrap().entities.iter()).map(|e| e.handle).collect();
     let unique: HashSet<Handle> = handles.iter().copied().collect();
@@ -52,6 +52,6 @@ fn faces_made_while_reading_do_not_take_the_files_handles() {
         assert!(d.entity(Handle::parse_hex(h).unwrap()).is_some(), "{h}");
     }
     // Nothing is lost through a DWG.
-    let back = cadcraft_io::read(&cadcraft_io::write(&d, "a.dwg").unwrap(), "a.dwg").unwrap();
+    let back = lividraft_io::read(&lividraft_io::write(&d, "a.dwg").unwrap(), "a.dwg").unwrap();
     assert_eq!(counts(&back), (3, 3));
 }

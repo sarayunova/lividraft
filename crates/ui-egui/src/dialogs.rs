@@ -97,16 +97,16 @@ fn dsettings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         tracking_options(ui, s);
         ui.separator();
         ui.heading(crate::tl!("Object Snap"));
-        let mut on = s.osmode & cadcraft_engine::snap::mode::OFF == 0;
+        let mut on = s.osmode & lividraft_engine::snap::mode::OFF == 0;
         if ui.checkbox(&mut on, crate::tl!("Object Snap On (F3)")).changed() {
             if on {
-                s.osmode &= !cadcraft_engine::snap::mode::OFF;
+                s.osmode &= !lividraft_engine::snap::mode::OFF;
             } else {
-                s.osmode |= cadcraft_engine::snap::mode::OFF;
+                s.osmode |= lividraft_engine::snap::mode::OFF;
             }
         }
         egui::Grid::new("osnap_grid").num_columns(2).show(ui, |ui| {
-            for (i, (bit, name)) in cadcraft_engine::snap::mode::ALL.iter().enumerate() {
+            for (i, (bit, name)) in lividraft_engine::snap::mode::ALL.iter().enumerate() {
                 let mut v = s.osmode & bit != 0;
                 if ui.checkbox(&mut v, crate::i18n::t(name)).changed() {
                     if v {
@@ -151,8 +151,8 @@ fn dsettings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 /// The polar and object snap tracking options of Drafting Settings: additional angles
 /// (POLARMODE bit 4, POLARADDANG), tracking on every polar angle (bit 2) and angles relative to
 /// the last segment (bit 1).
-fn tracking_options(ui: &mut egui::Ui, s: &mut cadcraft_engine::Settings) {
-    use cadcraft_engine::snap::tracking::polarmode;
+fn tracking_options(ui: &mut egui::Ui, s: &mut lividraft_engine::Settings) {
+    use lividraft_engine::snap::tracking::polarmode;
     /// A radio button for POLARMODE `bit` being `on`.
     fn flag(ui: &mut egui::Ui, flags: &mut u32, bit: u32, on: bool, label: &str) {
         if ui.radio((*flags & bit != 0) == on, label).clicked() {
@@ -166,11 +166,11 @@ fn tracking_options(ui: &mut egui::Ui, s: &mut cadcraft_engine::Settings) {
         }
         // The list as typed (degrees separated by `;`), kept while it doesn't parse yet.
         let id = ui.id().with("polaraddang");
-        let shown = cadcraft_engine::sysvars::format_angle_list(&s.polaraddang);
+        let shown = lividraft_engine::sysvars::format_angle_list(&s.polaraddang);
         let mut text = ui.data_mut(|d| d.get_temp::<String>(id)).unwrap_or_else(|| shown.clone());
         let resp = ui.add_enabled(additional, egui::TextEdit::singleline(&mut text).desired_width(140.0));
         if resp.changed()
-            && let Some(angles) = cadcraft_engine::sysvars::parse_angle_list(&text)
+            && let Some(angles) = lividraft_engine::sysvars::parse_angle_list(&text)
         {
             s.polaraddang = angles;
         }
@@ -238,7 +238,7 @@ fn pick(ui: &mut egui::Ui, salt: &str, value: &mut i64, options: &[(i64, String)
 /// Drawing Units (UNITS): edits a copy of LUNITS/LUPREC/AUNITS/AUPREC/INSUNITS and applies it
 /// through the `units` command on OK.
 fn units(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
-    use cadcraft_engine::units::{format_angle, format_distance};
+    use lividraft_engine::units::{format_angle, format_distance};
     let id = egui::Id::new("units_dialog_values");
     let mut v = ctx.data_mut(|d| d.get_temp::<[i64; 5]>(id)).unwrap_or_else(|| {
         app.session
@@ -306,8 +306,8 @@ fn units(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 fn about(ctx: &egui::Context, open: &mut bool) {
     let t = Tokens::get();
     let tab_id = egui::Id::new("about_tab");
-    egui::Window::new(crate::tl!("About CADCraft"))
-        .id(egui::Id::new("About CADCraft"))
+    egui::Window::new(crate::tl!("About LiVi Draft"))
+        .id(egui::Id::new("About LiVi Draft"))
         .open(open)
         .default_size(vec2(640.0, 420.0))
         .collapsible(false)
@@ -326,13 +326,13 @@ fn about(ctx: &egui::Context, open: &mut bool) {
                 1 => crate::credits::contributors_ui(ui),
                 2 => crate::credits::models_ui(ui),
                 _ => {
-                    ui.heading(crate::tl!("CADCraft"));
+                    ui.heading(crate::tl!("LiVi Draft"));
                     ui.label(crate::tf!("Version {version}", version = env!("CARGO_PKG_VERSION")));
                     ui.label(crate::tl!("Computer-aided design and drafting: an open-source, clean-room CAD application written in pure Rust."));
                     ui.add_space(6.0);
-                    ui.label(RichText::new(crate::tl!("One of the Crafting Apps by the ArtCraft team and community.")).color(t.text_dim));
-                    ui.hyperlink_to("getartcraft.com/apps/cadcraft", "https://getartcraft.com/apps/cadcraft");
-                    ui.hyperlink_to(crate::tl!("Join us on Discord"), "https://discord.gg/artcraft");
+                    ui.label(RichText::new(crate::tl!("A LiVi product, based on CADCraft by the ArtCraft Team.")).color(t.text_dim));
+                    ui.hyperlink_to("contact@liviverse.com", "mailto:contact@liviverse.com");
+                    ui.hyperlink_to("www.liviverse.com", "https://www.liviverse.com");
                     ui.add_space(6.0);
                     ui.label(RichText::new(crate::tl!("MIT OR Apache-2.0. Not affiliated with Autodesk, Inc.")).small().color(t.text_faint));
                 }
@@ -355,7 +355,7 @@ fn commands(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
             let f = filter.to_lowercase();
             egui::ScrollArea::vertical().show(ui, |ui| {
                 egui::Grid::new("cmdref").striped(true).num_columns(3).show(ui, |ui| {
-                    for c in cadcraft_engine::command_specs() {
+                    for c in lividraft_engine::command_specs() {
                         if !f.is_empty()
                             && !c.id.contains(&f)
                             && !c.label.to_ascii_lowercase().contains(&f)
@@ -406,7 +406,7 @@ fn insert_block(app: &mut CadApp, name: &str) {
     if app.session.running.as_ref().is_none_or(|r| r.id != "insert") {
         return;
     }
-    if let Err(e) = app.session.input(cadcraft_engine::Input::Text(name.to_string())) {
+    if let Err(e) = app.session.input(lividraft_engine::Input::Text(name.to_string())) {
         app.session.echo(e.to_string());
     }
 }
@@ -426,9 +426,9 @@ fn language(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_engine::doc::EntityKind;
-    use cadcraft_engine::geom::Vec2;
-    use cadcraft_engine::{Input, Session};
+    use lividraft_engine::doc::EntityKind;
+    use lividraft_engine::geom::Vec2;
+    use lividraft_engine::{Input, Session};
     use serde_json::json;
 
     use crate::{CadApp, Services};

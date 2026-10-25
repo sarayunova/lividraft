@@ -1,5 +1,5 @@
-use cadcraft_doc::{EntityKind, Handle, MLeader};
-use cadcraft_geom::Vec2;
+use lividraft_doc::{EntityKind, Handle, MLeader};
+use lividraft_geom::Vec2;
 use serde_json::{Value, json};
 
 use crate::{Input, Session};
@@ -118,5 +118,5 @@ fn hostile_mleader_edit_params_never_panic() {
     ] {
         let _ = s.execute(id, &p);
     }
-    let _ = cadcraft_render::build(s.doc().unwrap(), &cadcraft_doc::Space::Model, &cadcraft_render::Options::default());
+    let _ = lividraft_render::build(s.doc().unwrap(), &lividraft_doc::Space::Model, &lividraft_render::Options::default());
 }

@@ -1,7 +1,7 @@
 //! Polygon filling: even-odd regions to triangles (slab decomposition), wide polylines.
 
-use cadcraft_doc::LwPolyline;
-use cadcraft_geom::{Polyline, Vec2};
+use lividraft_doc::LwPolyline;
+use lividraft_geom::{Polyline, Vec2};
 
 /// Triangulate an even-odd region bounded by closed loops (holes allowed) by cutting it into
 /// horizontal slabs at every vertex y and emitting trapezoids. Two edges that cross inside a slab

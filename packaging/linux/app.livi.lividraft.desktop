@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=LiVi Draft
+GenericName=Computer-Aided Design
+Comment=Draft, dimension and plot 2D drawings; open DXF and DWG files
+Exec=lividraft %F
+TryExec=lividraft
+Icon=app.livi.lividraft
+Terminal=false
+StartupNotify=true
+StartupWMClass=app.livi.lividraft
+Categories=Graphics;Engineering;VectorGraphics;
+MimeType=image/vnd.dxf;image/vnd.dwg;application/x-dxf;application/acad;
+Keywords=cad;drafting;dxf;dwg;drawing;engineering;architecture;mechanical;

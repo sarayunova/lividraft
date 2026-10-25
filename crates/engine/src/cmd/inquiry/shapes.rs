@@ -4,8 +4,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use cadcraft_doc::{Entity, EntityKind};
-use cadcraft_geom::{Bounds2, Polyline, Vec2, intersect_segments};
+use lividraft_doc::{Entity, EntityKind};
+use lividraft_geom::{Bounds2, Polyline, Vec2, intersect_segments};
 use serde_json::{Value, json};
 
 use super::super::*;
@@ -113,7 +113,7 @@ fn facts(s: &Session, e: &Entity, tol: f64) -> Result<Facts> {
             Facts::Shape { perimeter, area, signed: area, centroid: Some(c.center.xy()), cross: None, dups: Vec::new() }
         }
         EntityKind::Ellipse(el) => {
-            let geom = cadcraft_geom::Ellipse { center: el.center.xy(), major: el.major.xy(), ratio: el.ratio, start: el.start, end: el.end };
+            let geom = lividraft_geom::Ellipse { center: el.center.xy(), major: el.major.xy(), ratio: el.ratio, start: el.start, end: el.end };
             if !geom.is_full() {
                 return Ok(Facts::Skip("open"));
             }

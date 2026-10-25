@@ -30,7 +30,7 @@ impl Class {
     }
 }
 
-/// The layering table. Names are package names without the `cadcraft-`
+/// The layering table. Names are package names without the `lividraft-`
 /// prefix.
 pub const TABLE: &[(&str, Class)] = &[
     ("geom", Class::Layer(0)),
@@ -47,7 +47,7 @@ pub const TABLE: &[(&str, Class)] = &[
     ("mcp", Class::Layer(5)),
     ("testkit", Class::Testkit),
     // apps and tooling
-    ("cadcraft", Class::Exempt),
+    ("lividraft", Class::Exempt),
     ("cli", Class::Exempt),
     ("web", Class::Exempt),
     ("xtask", Class::Exempt),
@@ -75,7 +75,7 @@ pub const UI_CRATES: &[&str] = &["craft-ui", "egui", "eframe", "egui-wgpu", "wgp
 pub const UI_MIN_LAYER: u8 = 5;
 
 pub fn short_name(pkg: &str) -> &str {
-    pkg.strip_prefix("cadcraft-").unwrap_or(pkg)
+    pkg.strip_prefix("lividraft-").unwrap_or(pkg)
 }
 
 pub fn classify(pkg: &str) -> Option<Class> {
@@ -133,7 +133,7 @@ impl std::fmt::Display for Violation {
                 write!(f, "{krate}: standalone crate must not depend on workspace crate {dep}")
             }
             Violation::TestkitAsNormalDep { krate } => {
-                write!(f, "{krate}: cadcraft-testkit may only be a dev-dependency")
+                write!(f, "{krate}: lividraft-testkit may only be a dev-dependency")
             }
             Violation::UiBelowL6 { krate, dep, layer } => {
                 write!(f, "{krate} (L{layer}) depends on UI crate `{dep}`; UI toolkits are only allowed in L6+")
@@ -241,74 +241,74 @@ mod tests {
     #[test]
     fn clean_downward_graph_passes() {
         let g = [
-            c("cadcraft-geom", &[("kurbo", Normal, false)]),
-            c("cadcraft-doc", &[("cadcraft-geom", Normal, true)]),
-            c("cadcraft-engine", &[("cadcraft-doc", Normal, true), ("cadcraft-testkit", Dev, true)]),
-            c("cadcraft-ui-egui", &[("cadcraft-engine", Normal, true), ("egui", Normal, false)]),
-            c("cadcraft-cli", &[("cadcraft-ui-egui", Normal, true)]),
+            c("lividraft-geom", &[("kurbo", Normal, false)]),
+            c("lividraft-doc", &[("lividraft-geom", Normal, true)]),
+            c("lividraft-engine", &[("lividraft-doc", Normal, true), ("lividraft-testkit", Dev, true)]),
+            c("lividraft-ui-egui", &[("lividraft-engine", Normal, true), ("egui", Normal, false)]),
+            c("lividraft-cli", &[("lividraft-ui-egui", Normal, true)]),
         ];
         assert!(check(&g).is_empty(), "{:?}", check(&g));
     }
 
     #[test]
     fn upward_dependency_flagged() {
-        let v = check(&[c("cadcraft-doc", &[("cadcraft-engine", Normal, true)])]);
+        let v = check(&[c("lividraft-doc", &[("lividraft-engine", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 1, to: 4, .. }]));
     }
 
     #[test]
     fn sideways_dependency_flagged() {
-        let v = check(&[c("cadcraft-fonts", &[("cadcraft-render", Normal, true)])]);
+        let v = check(&[c("lividraft-fonts", &[("lividraft-render", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 2, to: 2, .. }]));
     }
 
     #[test]
     fn l0_foundation_chain_allowed_one_way() {
-        assert!(check(&[c("cadcraft-color", &[("cadcraft-geom", Normal, true)])]).is_empty());
-        let v = check(&[c("cadcraft-geom", &[("cadcraft-color", Normal, true)])]);
+        assert!(check(&[c("lividraft-color", &[("lividraft-geom", Normal, true)])]).is_empty());
+        let v = check(&[c("lividraft-geom", &[("lividraft-color", Normal, true)])]);
         assert!(matches!(v[..], [Violation::Upward { from: 0, to: 0, .. }]));
     }
 
     #[test]
     fn self_dev_dependency_ignored() {
-        assert!(check(&[c("cadcraft-doc", &[("cadcraft-doc", Dev, true)])]).is_empty());
+        assert!(check(&[c("lividraft-doc", &[("lividraft-doc", Dev, true)])]).is_empty());
     }
 
     #[test]
     fn upward_dev_dependency_flagged() {
-        let v = check(&[c("cadcraft-geom", &[("cadcraft-doc", Dev, true)])]);
+        let v = check(&[c("lividraft-geom", &[("lividraft-doc", Dev, true)])]);
         assert!(matches!(v[..], [Violation::Upward { kind: Dev, .. }]));
     }
 
     #[test]
     fn ui_crates_below_l6_flagged() {
         for dep in ["craft-ui", "egui", "eframe", "winit", "egui_kittest", "rfd", "bevy_ecs", "bevy"] {
-            let v = check(&[c("cadcraft-engine", &[(dep, Normal, false)])]);
+            let v = check(&[c("lividraft-engine", &[(dep, Normal, false)])]);
             assert!(matches!(v[..], [Violation::UiBelowL6 { layer: 4, .. }]), "{dep}");
         }
-        assert!(check(&[c("cadcraft-engine", &[("egui_extras_not", Normal, false)])]).is_empty());
-        assert!(check(&[c("cadcraft-mcp", &[("winit", Normal, false)])]).is_empty());
+        assert!(check(&[c("lividraft-engine", &[("egui_extras_not", Normal, false)])]).is_empty());
+        assert!(check(&[c("lividraft-mcp", &[("winit", Normal, false)])]).is_empty());
     }
 
     #[test]
     fn unregistered_crate_is_error() {
-        let v = check(&[c("cadcraft-mystery", &[])]);
-        assert!(matches!(&v[..], [Violation::Unregistered { krate }] if krate == "cadcraft-mystery"));
+        let v = check(&[c("lividraft-mystery", &[])]);
+        assert!(matches!(&v[..], [Violation::Unregistered { krate }] if krate == "lividraft-mystery"));
         assert!(v[0].to_string().contains("register"));
     }
 
     #[test]
     fn testkit_only_as_dev_dependency() {
-        let v = check(&[c("cadcraft-render", &[("cadcraft-testkit", Normal, true)])]);
+        let v = check(&[c("lividraft-render", &[("lividraft-testkit", Normal, true)])]);
         assert!(matches!(v[..], [Violation::TestkitAsNormalDep { .. }]));
-        assert!(check(&[c("cadcraft-render", &[("cadcraft-testkit", Dev, true)])]).is_empty());
-        assert!(check(&[c("cadcraft-testkit", &[("cadcraft-engine", Normal, true)])]).is_empty());
+        assert!(check(&[c("lividraft-render", &[("lividraft-testkit", Dev, true)])]).is_empty());
+        assert!(check(&[c("lividraft-testkit", &[("lividraft-engine", Normal, true)])]).is_empty());
     }
 
     #[test]
     fn apps_and_xtask_exempt() {
-        for app in ["cadcraft", "cadcraft-cli", "cadcraft-web", "xtask"] {
-            assert!(check(&[c(app, &[("egui", Normal, false), ("cadcraft-ui-egui", Normal, true)])]).is_empty());
+        for app in ["lividraft", "lividraft-cli", "lividraft-web", "xtask"] {
+            assert!(check(&[c(app, &[("egui", Normal, false), ("lividraft-ui-egui", Normal, true)])]).is_empty());
         }
     }
 
@@ -316,17 +316,17 @@ mod tests {
     fn metadata_parsing() {
         let meta: Value = serde_json::from_str(
             r#"{"packages":[
-                {"name":"cadcraft-doc","dependencies":[
-                    {"name":"cadcraft-geom","kind":null,"path":"/x/crates/geom"},
+                {"name":"lividraft-doc","dependencies":[
+                    {"name":"lividraft-geom","kind":null,"path":"/x/crates/geom"},
                     {"name":"serde","kind":null},
                     {"name":"proptest","kind":"dev"}]},
-                {"name":"cadcraft-geom","dependencies":[]}
+                {"name":"lividraft-geom","dependencies":[]}
             ]}"#,
         )
         .unwrap();
         let g = from_metadata(&meta).unwrap();
         assert_eq!(g.len(), 2);
-        let doc = g.iter().find(|c| c.name == "cadcraft-doc").unwrap();
+        let doc = g.iter().find(|c| c.name == "lividraft-doc").unwrap();
         assert!(doc.deps[0].workspace && !doc.deps[1].workspace);
         assert_eq!(doc.deps[2].kind, Dev);
         assert!(check(&g).is_empty());

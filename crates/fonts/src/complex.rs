@@ -10,7 +10,7 @@ use std::ops::Range;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
-use cadcraft_geom::Vec2;
+use lividraft_geom::Vec2;
 
 use crate::ttf::{self, Face};
 use crate::{Shaped, bidi, stroke};

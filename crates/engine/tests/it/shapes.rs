@@ -1,9 +1,9 @@
 //! SHAPES: perimeter, area, centroid, winding, self-intersection and duplicate vertices of the
 //! closed shapes in a drawing (#1436).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::geom::{PolyVertex, Vec2};
-use cadcraft_engine::doc::{Common, EntityKind, LwPolyline, Space};
+use lividraft_engine::Session;
+use lividraft_engine::doc::geom::{PolyVertex, Vec2};
+use lividraft_engine::doc::{Common, EntityKind, LwPolyline, Space};
 use serde_json::{Value, json};
 
 const EPS: f64 = 1e-9;

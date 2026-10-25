@@ -2,8 +2,8 @@
 //! FLATTEN, plus the fillet/trim/extend extensions used by modify.rs (arcs, polylines,
 //! ellipses and splines).
 
-use cadcraft_doc::{Common, Entity, EntityKind, Handle, LwPolyline, MAX_BLOCK_DEPTH, Space};
-use cadcraft_geom::{
+use lividraft_doc::{Common, Entity, EntityKind, Handle, LwPolyline, MAX_BLOCK_DEPTH, Space};
+use lividraft_geom::{
     Arc, Ellipse, Line, Mat3, PolyVertex, Polyline, Segment, Spline, TAU, Vec2, ccw_sweep, intersect_ext, line_circle, line_line_infinite, norm_angle,
 };
 use serde_json::{Value, json};
@@ -794,7 +794,7 @@ pub(crate) fn lengthen_kind(k: &EntityKind, pick: Option<Vec2>, mode: LenMode) -
                 return Err(other("The new arc would be zero length or a full circle."));
             }
             let na = if at_end { Arc::new(g.center, g.radius, g.start, g.start + ns) } else { Arc::new(g.center, g.radius, g.end - ns, g.end) };
-            Ok(EntityKind::Arc(cadcraft_doc::Arc { radius: na.radius, start: na.start, end: na.end, ..ar.clone() }))
+            Ok(EntityKind::Arc(lividraft_doc::Arc { radius: na.radius, start: na.start, end: na.end, ..ar.clone() }))
         }
         EntityKind::LwPolyline(p) if !p.closed && p.vertices.len() >= 2 => {
             let total = Polyline { vertices: p.vertices.clone(), closed: false }.len();
@@ -1264,10 +1264,10 @@ impl Interactive for BlendM {
 
 pub(crate) fn reverse_kind(k: &EntityKind) -> Option<EntityKind> {
     Some(match k {
-        EntityKind::Line(l) => EntityKind::Line(cadcraft_doc::Line { a: l.b, b: l.a }),
+        EntityKind::Line(l) => EntityKind::Line(lividraft_doc::Line { a: l.b, b: l.a }),
         EntityKind::LwPolyline(p) => EntityKind::LwPolyline(LwPolyline { vertices: curves::reverse_vertices(&p.vertices, p.closed), ..p.clone() }),
         EntityKind::Polyline3d(p) => {
-            EntityKind::Polyline3d(cadcraft_doc::Polyline3d { points: p.points.iter().rev().copied().collect(), closed: p.closed })
+            EntityKind::Polyline3d(lividraft_doc::Polyline3d { points: p.points.iter().rev().copied().collect(), closed: p.closed })
         }
         EntityKind::Spline(sp) => EntityKind::Spline(curves::reverse_spline(sp)),
         _ => return None,
@@ -1297,7 +1297,7 @@ fn run_reverse(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// Zero every z coordinate; 3D polylines become 2D polylines.
 pub(crate) fn flatten_kind(k: &mut EntityKind) {
-    let z = |p: &mut cadcraft_geom::Vec3| p.z = 0.0;
+    let z = |p: &mut lividraft_geom::Vec3| p.z = 0.0;
     match k {
         EntityKind::Line(l) => {
             z(&mut l.a);
@@ -1398,7 +1398,7 @@ fn run_flatten(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Model↔paper transform through a viewport: paper = center + (model − viewCenter) / scale.
-fn viewport_of(s: &Session, layout: &str, vp: Option<Handle>) -> Option<cadcraft_doc::Viewport> {
+fn viewport_of(s: &Session, layout: &str, vp: Option<Handle>) -> Option<lividraft_doc::Viewport> {
     let d = s.doc().ok()?;
     if let Some(h) = vp
         && let Some(e) = d.entity(h)
@@ -1543,7 +1543,7 @@ impl Interactive for SelOp {
 // =====================================================================================
 
 /// The leaf objects of a block reference in world coordinates (nested references expanded).
-fn nested_leaves(d: &cadcraft_doc::Drawing, ins: &cadcraft_doc::Insert, m: &Mat3, depth: usize, out: &mut Vec<(Common, EntityKind)>) {
+fn nested_leaves(d: &lividraft_doc::Drawing, ins: &lividraft_doc::Insert, m: &Mat3, depth: usize, out: &mut Vec<(Common, EntityKind)>) {
     if depth >= MAX_BLOCK_DEPTH || out.len() >= MAX_GEN {
         return;
     }
@@ -1711,7 +1711,7 @@ fn trim_for_fillet(k: &EntityKind, pick: Vec2, t: Vec2) -> Option<(Option<Entity
             let ap = g.center.angle_to(pick);
             let keep_start_side = if g.contains_angle(ta) {
                 // Keep the side of the tangent point that holds the pick.
-                cadcraft_geom::angle_in_sweep(ap, g.start, ta)
+                lividraft_geom::angle_in_sweep(ap, g.start, ta)
             } else {
                 // Extend the nearer end.
                 ccw_sweep(g.end, ta) <= ccw_sweep(ta, g.start)
@@ -1752,7 +1752,7 @@ pub(crate) fn fillet_curves(s: &mut Session, h1: Handle, p1: Vec2, h2: Handle, p
         let hits: Vec<Vec2> = match (o1, o2) {
             (TanObj::Line(a), TanObj::Line(b)) => line_line_infinite(a.a, a.b, b.a, b.b).map(|x| vec![x.0]).unwrap_or_default(),
             (TanObj::Line(l), TanObj::Circle(c)) | (TanObj::Circle(c), TanObj::Line(l)) => line_circle(&l, &c).into_iter().map(|x| x.0).collect(),
-            (TanObj::Circle(a), TanObj::Circle(b)) => cadcraft_geom::circle_circle(&a, &b),
+            (TanObj::Circle(a), TanObj::Circle(b)) => lividraft_geom::circle_circle(&a, &b),
         };
         let x = hits
             .into_iter()
@@ -1859,7 +1859,7 @@ pub(crate) fn fillet_polyline(s: &mut Session, h: Handle, r: f64) -> Result<usiz
         let next = at(i + 1).p;
         let t1 = v.p + (prev - v.p).normalized() * c;
         let t2 = v.p + (next - v.p).normalized() * c;
-        let b = cadcraft_geom::arc_to_bulge(turn.get(i).copied().unwrap_or(0.0));
+        let b = lividraft_geom::arc_to_bulge(turn.get(i).copied().unwrap_or(0.0));
         out.push(PolyVertex { p: t1, bulge: b, ..v });
         out.push(PolyVertex { p: t2, bulge: 0.0, ..v });
         count += 1;
@@ -1872,12 +1872,12 @@ pub(crate) fn fillet_polyline(s: &mut Session, h: Handle, r: f64) -> Result<usiz
 // TRIM / EXTEND for ellipses and splines
 // =====================================================================================
 
-fn ellipse_of(e: &cadcraft_doc::Ellipse) -> Ellipse {
+fn ellipse_of(e: &lividraft_doc::Ellipse) -> Ellipse {
     Ellipse { center: e.center.xy(), major: e.major.xy(), ratio: e.ratio, start: e.start, end: e.end }
 }
 
 fn ellipse_kind(e: &Ellipse) -> EntityKind {
-    EntityKind::Ellipse(cadcraft_doc::Ellipse { center: v3(e.center), major: v3(e.major), ratio: e.ratio, start: e.start, end: e.end })
+    EntityKind::Ellipse(lividraft_doc::Ellipse { center: v3(e.center), major: v3(e.major), ratio: e.ratio, start: e.start, end: e.end })
 }
 
 /// Intersections of a sampled curve `eval(t)` (parameters `ts`) with the cutting segments,
@@ -1951,7 +1951,7 @@ pub(crate) fn trim_other(k: &EntityKind, cut: &[Segment], pick: Vec2) -> Result<
                 let n = ps.len();
                 for i in 0..n {
                     let (Some(a0), Some(a1)) = (ps.get(i).copied(), ps.get((i + 1) % n).copied()) else { continue };
-                    if cadcraft_geom::angle_in_sweep(tp, a0, a1) {
+                    if lividraft_geom::angle_in_sweep(tp, a0, a1) {
                         return Ok(vec![ellipse_kind(&Ellipse { start: a1, end: a0, ..ge })]);
                     }
                 }
@@ -2028,7 +2028,7 @@ pub(crate) fn extend_other(k: &EntityKind, cut: &[Segment], pick: Vec2) -> Resul
             let hits: Vec<f64> = hits_on(&eval, &ellipse_samples(&full), cut)
                 .into_iter()
                 .map(norm_angle)
-                .filter(|t| !cadcraft_geom::angle_in_sweep(*t, ge.start, ge.end))
+                .filter(|t| !lividraft_geom::angle_in_sweep(*t, ge.start, ge.end))
                 .collect();
             let t = if from_end {
                 hits.iter().copied().min_by(|x, y| ccw_sweep(ge.end, *x).total_cmp(&ccw_sweep(ge.end, *y)))

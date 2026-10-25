@@ -1,4 +1,4 @@
-//! CADCraft text layout.
+//! LiVi Draft text layout.
 //!
 //! Turns TEXT and MTEXT into stroke polylines with the built-in single-stroke font
 //! ("CADCraft Stroke") or glyph outlines of installed TrueType fonts ([`ttf`]), with a
@@ -20,7 +20,7 @@ mod stroke;
 pub mod subset;
 pub mod ttf;
 
-use cadcraft_geom::{Bounds2, Vec2};
+use lividraft_geom::{Bounds2, Vec2};
 
 pub use mtext::para::{DEFAULT_TAB, ListStyle, MTextColumnSpec, ParaAlign, ParaProps, Paragraphs, TabKind, list_contents};
 pub use mtext::{MTextColor, MTextLayout, MTextParams, MTextPiece, layout_mtext, layout_mtext_with, plain_mtext};
@@ -743,8 +743,8 @@ mod ttf_tests {
             assert!(crate::ttf::Face::new(arc.clone(), 3).is_none());
             assert!(!crate::ttf::Face { bytes: arc, index: u32::MAX }.has_glyph('a'));
         }
-        crate::ttf::register("cadcraft-hostile-test.ttc", ttc);
-        assert!(crate::ttf::find("cadcraft-hostile-test.ttc").is_none());
+        crate::ttf::register("lividraft-hostile-test.ttc", ttc);
+        assert!(crate::ttf::find("lividraft-hostile-test.ttc").is_none());
         let _ = crate::ttf::fallback_for('\u{4E2D}');
     }
 

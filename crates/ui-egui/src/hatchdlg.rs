@@ -2,9 +2,9 @@
 //! dialog (HATCHEDIT, double-click): one window in two modes. It never edits the drawing itself:
 //! picks go through HATCHPICK, and OK runs one HATCH, GRADIENT or HATCHEDIT call.
 
-use cadcraft_color::Color;
-use cadcraft_doc::{Drawing, EntityKind, Handle, Space};
-use cadcraft_engine::{HatchPicks, PickMode};
+use lividraft_color::Color;
+use lividraft_doc::{Drawing, EntityKind, Handle, Space};
+use lividraft_engine::{HatchPicks, PickMode};
 use serde_json::{Value, json};
 
 use egui::vec2;
@@ -329,7 +329,7 @@ pub fn start_pick(app: &mut CadApp, mode: PickMode) {
         PickMode::Hatch => "Hatch",
     };
     if app.session.running.is_some()
-        && let Err(e) = app.session.input(cadcraft_engine::Input::Keyword(kw.into()))
+        && let Err(e) = app.session.input(lividraft_engine::Input::Keyword(kw.into()))
     {
         app.session.echo(e.to_string());
     }
@@ -601,10 +601,10 @@ fn options_ui(ui: &mut egui::Ui, st: &mut HatchDlgState, action: &mut Action) {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_color::Color;
-    use cadcraft_doc::Handle;
-    use cadcraft_engine::geom::Vec2;
-    use cadcraft_engine::{HatchPicks, PickMode, Session};
+    use lividraft_color::Color;
+    use lividraft_doc::Handle;
+    use lividraft_engine::geom::Vec2;
+    use lividraft_engine::{HatchPicks, PickMode, Session};
     use serde_json::json;
 
     use super::*;
@@ -631,8 +631,8 @@ mod tests {
         assert!(app.session.prompt_text().contains("Pick internal point"));
         resume(&mut app);
         assert_eq!(app.ui.dialog, None, "still picking");
-        app.session.input(cadcraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
-        app.session.input(cadcraft_engine::Input::Enter).unwrap();
+        app.session.input(lividraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
+        app.session.input(lividraft_engine::Input::Enter).unwrap();
         resume(&mut app);
         assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
         let st = app.hatch_dlg.clone().unwrap();
@@ -648,7 +648,7 @@ mod tests {
         }
         let before = app.hatch_dlg.clone();
         start_pick(&mut app, PickMode::Points);
-        app.session.input(cadcraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
+        app.session.input(lividraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
         app.session.cancel();
         resume(&mut app);
         assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
@@ -660,8 +660,8 @@ mod tests {
         let (mut app, _) = app_with_rect();
         open_create(&mut app, false);
         start_pick(&mut app, PickMode::Points);
-        app.session.input(cadcraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
-        app.session.input(cadcraft_engine::Input::Enter).unwrap();
+        app.session.input(lividraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
+        app.session.input(lividraft_engine::Input::Enter).unwrap();
         app.session.new_drawing(false);
         resume(&mut app);
         assert_eq!(app.ui.dialog, None);
@@ -674,13 +674,13 @@ mod tests {
         let hx = app.session.execute("hatch", &json!({ "points": [[5, 5]] })).unwrap()["handle"].as_str().unwrap().to_string();
         open_create(&mut app, false);
         start_pick(&mut app, PickMode::Hatch);
-        app.session.input(cadcraft_engine::Input::Pick(vec![Handle::parse_hex(&hx).unwrap()])).unwrap();
+        app.session.input(lividraft_engine::Input::Pick(vec![Handle::parse_hex(&hx).unwrap()])).unwrap();
         resume(&mut app);
         assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
         assert_eq!(app.hatch_dlg.clone().unwrap().edit, vec![Handle::parse_hex(&hx).unwrap()]);
         // Nothing picked: no dialog.
         start_pick(&mut app, PickMode::Hatch);
-        app.session.input(cadcraft_engine::Input::Enter).unwrap();
+        app.session.input(lividraft_engine::Input::Enter).unwrap();
         resume(&mut app);
         assert_eq!((app.ui.dialog.clone(), app.hatch_dlg.clone()), (None, None));
     }
@@ -764,7 +764,7 @@ mod tests {
         st.handles.push(c);
         let (cmd, p) = ok_call(&st).unwrap();
         s.execute(cmd, &p).unwrap();
-        let n = s.doc().unwrap().model.iter().filter(|e| matches!(e.kind, cadcraft_doc::EntityKind::Hatch(_))).count();
+        let n = s.doc().unwrap().model.iter().filter(|e| matches!(e.kind, lividraft_doc::EntityKind::Hatch(_))).count();
         assert_eq!(n, 1);
     }
 
@@ -888,7 +888,7 @@ mod tests {
         }
         assert!(ok(&mut app));
         assert_eq!(app.hatch_dlg, None);
-        assert!(app.session.doc().unwrap().model.iter().any(|e| matches!(e.kind, cadcraft_doc::EntityKind::Hatch(_))));
+        assert!(app.session.doc().unwrap().model.iter().any(|e| matches!(e.kind, lividraft_doc::EntityKind::Hatch(_))));
     }
 
     #[test]
@@ -950,7 +950,7 @@ mod tests {
         app.cmdline("hatchedit");
         assert_eq!(app.ui.dialog, None);
         assert!(app.session.prompt_text().contains("Select hatch object"), "{}", app.session.prompt_text());
-        app.session.input(cadcraft_engine::Input::Pick(vec![h])).unwrap();
+        app.session.input(lividraft_engine::Input::Pick(vec![h])).unwrap();
         resume(&mut app);
         assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
         assert_eq!(app.hatch_dlg.clone().unwrap().edit, vec![h]);
@@ -967,7 +967,7 @@ mod tests {
         }
         assert!(ok(&mut app));
         let d = app.session.doc().unwrap();
-        assert!(matches!(&d.entity(h).unwrap().kind, cadcraft_doc::EntityKind::Hatch(x) if x.pattern == "BRICK"));
+        assert!(matches!(&d.entity(h).unwrap().kind, lividraft_doc::EntityKind::Hatch(x) if x.pattern == "BRICK"));
         // -HATCHEDIT: the command line (the window, not `ok`, closes the dialog).
         app.ui.dialog = None;
         app.cmdline("-hatchedit");
@@ -994,8 +994,8 @@ mod tests {
         let (mut app, r) = app_with_rect();
         open_create(&mut app, false);
         start_pick(&mut app, PickMode::Objects);
-        app.session.input(cadcraft_engine::Input::Pick(vec![r])).unwrap();
-        app.session.input(cadcraft_engine::Input::Enter).unwrap();
+        app.session.input(lividraft_engine::Input::Pick(vec![r])).unwrap();
+        app.session.input(lividraft_engine::Input::Enter).unwrap();
         app.run("layout", json!({ "option": "set", "name": "Layout1" })).unwrap();
         resume(&mut app);
         assert_eq!((app.ui.dialog.clone(), app.hatch_dlg.clone()), (None, None), "model-space picks never hatch a layout");
@@ -1018,7 +1018,7 @@ mod tests {
         let (cmd, p) = ok_call(&st).unwrap();
         s.execute(cmd, &p).unwrap();
         match &s.doc().unwrap().entity(h).unwrap().kind {
-            cadcraft_doc::EntityKind::Hatch(x) => assert!(x.gradient.is_none() && x.pattern == "ANSI31"),
+            lividraft_doc::EntityKind::Hatch(x) => assert!(x.gradient.is_none() && x.pattern == "ANSI31"),
             k => panic!("{k:?}"),
         }
     }

@@ -8,22 +8,22 @@ version = "0.12.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.90"
-repository = "https://github.com/storytold/cadcraft"
+repository = "https://github.com/sarayunova/lividraft"
 
 [workspace.dependencies]
 # internal
-cadcraft-geom = { path = "crates/geom" }
-cadcraft-dxf = { path = "crates/dxf" }
-cadcraft-dwg = { path = "crates/dwg" }
-cadcraft-color = { path = "crates/color" }
-cadcraft-doc = { path = "crates/doc" }
-cadcraft-constraints = { path = "crates/constraints" }
-cadcraft-fonts = { path = "crates/fonts" }
-cadcraft-render = { path = "crates/render" }
-cadcraft-io = { path = "crates/io" }
-cadcraft-engine = { path = "crates/engine" }
-cadcraft-ui-egui = { path = "crates/ui-egui" }
-cadcraft-mcp = { path = "crates/mcp" }
+lividraft-geom = { path = "crates/geom" }
+lividraft-dxf = { path = "crates/dxf" }
+lividraft-dwg = { path = "crates/dwg" }
+lividraft-color = { path = "crates/color" }
+lividraft-doc = { path = "crates/doc" }
+lividraft-constraints = { path = "crates/constraints" }
+lividraft-fonts = { path = "crates/fonts" }
+lividraft-render = { path = "crates/render" }
+lividraft-io = { path = "crates/io" }
+lividraft-engine = { path = "crates/engine" }
+lividraft-ui-egui = { path = "crates/ui-egui" }
+lividraft-mcp = { path = "crates/mcp" }
 # Which paths stored in a drawing (xrefs, data links) may be opened.
 craft-docpath = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "82a24b006eefa036b43c09a67fb9a3fbd17ffe63" }
 

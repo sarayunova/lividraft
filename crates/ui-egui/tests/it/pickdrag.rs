@@ -1,9 +1,9 @@
 //! OPTIONS checkbox and real pointer gestures share the saved PICKDRAG preference.
-use cadcraft_engine::Session;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Event, Modifiers, PointerButton, Pos2, vec2};
 use egui_kittest::{Harness, kittest::Queryable};
+use lividraft_engine::Session;
+use lividraft_engine::geom::Vec2;
+use lividraft_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 fn harness() -> Harness<'static, CadApp> {

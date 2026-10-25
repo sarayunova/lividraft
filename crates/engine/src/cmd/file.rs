@@ -7,8 +7,8 @@ mod template;
 
 use std::sync::OnceLock;
 
-use cadcraft_doc::Drawing;
-pub use cadcraft_dxf::Version;
+use lividraft_doc::Drawing;
+pub use lividraft_dxf::Version;
 use serde_json::{Value, json};
 
 use super::*;
@@ -29,7 +29,7 @@ const MAX_DRAWING_BYTES: usize = 512 << 20;
 const MAX_SCRIPT_BYTES: usize = 64 << 20;
 
 /// Plot a space to PDF bytes with JSON options (`{paper?, landscape?, fit?, lineweights?, …}`).
-pub type PlotHook = fn(&Drawing, &cadcraft_doc::Space, &Value) -> std::result::Result<Vec<u8>, String>;
+pub type PlotHook = fn(&Drawing, &lividraft_doc::Space, &Value) -> std::result::Result<Vec<u8>, String>;
 
 /// File format hooks (installed by the app so the engine stays I/O-agnostic and wasm-safe).
 pub struct IoHooks {
@@ -52,9 +52,9 @@ pub fn io() -> Option<&'static IoHooks> {
 /// (installed by the app with the DXF reader and writer, a lower layer).
 pub struct EntityCodec {
     /// The entity's type name and the groups of its record, without its `0` group.
-    pub groups: fn(&Drawing, &cadcraft_doc::Entity) -> (String, Vec<cadcraft_dxf::Tag>),
+    pub groups: fn(&Drawing, &lividraft_doc::Entity) -> (String, Vec<lividraft_dxf::Tag>),
     /// An entity from a type name and groups.
-    pub entity: fn(&str, &[cadcraft_dxf::Tag]) -> Option<(cadcraft_doc::Common, cadcraft_doc::EntityKind)>,
+    pub entity: fn(&str, &[lividraft_dxf::Tag]) -> Option<(lividraft_doc::Common, lividraft_doc::EntityKind)>,
 }
 
 static CODEC: OnceLock<EntityCodec> = OnceLock::new();
@@ -147,7 +147,7 @@ fn write_bytes(s: &Session, cmd: &str, path: &str, opts: &SaveAs) -> Result<Vec<
         return Err(bad(cmd, "binary applies to DXF files only"));
     }
     // A drawing file is the drawing outside the Block Editor; an image is what is shown.
-    let d: &cadcraft_doc::Drawing = if is_drawing_file(path) { s.state()?.drawing() } else { s.doc()? };
+    let d: &lividraft_doc::Drawing = if is_drawing_file(path) { s.state()?.drawing() } else { s.doc()? };
     let r = if *opts == SaveAs::default() {
         (hooks.write)(d, path)
     } else {
@@ -305,7 +305,7 @@ fn read_bytes(bytes: &[u8], name: &str, path: Option<String>) -> Result<ReadFile
     // A file that isn't a drawing (an imported SVG) gives the drawing no file name: QSAVE then
     // asks where to save instead of exporting over the original.
     let path = path.filter(|p| is_drawing_file(p));
-    Ok(ReadFile { drawing, binary_dxf: cadcraft_dxf::is_binary(bytes), name: name.to_string(), path })
+    Ok(ReadFile { drawing, binary_dxf: lividraft_dxf::is_binary(bytes), name: name.to_string(), path })
 }
 
 fn add_read(s: &mut Session, drawing: Drawing, binary_dxf: bool, name: &str, path: Option<String>) -> usize {
@@ -402,7 +402,7 @@ fn save_as(s: &mut Session, cmd: &str, path: &str, opts: &SaveAs) -> Result<usiz
         let st = s.state_mut()?;
         st.binary_dxf = opts.binary;
         if let Some(v) = opts.version
-            && st.drawing().header.get("ACADVER").and_then(cadcraft_doc::HVal::as_str) != Some(v.code())
+            && st.drawing().header.get("ACADVER").and_then(lividraft_doc::HVal::as_str) != Some(v.code())
         {
             std::sync::Arc::make_mut(st.drawing_arc_mut()).header.set_str("ACADVER", v.code());
             st.saved = st.drawing().clone();
@@ -417,7 +417,7 @@ fn store(path: &str, bytes: &[u8]) -> Result<()> {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Exclusively create a fresh temporary file and rename it over `path`, so a planted
-        // `<path>.cadcraft-tmp` symlink cannot redirect the write onto another file (CWE-59).
+        // `<path>.lividraft-tmp` symlink cannot redirect the write onto another file (CWE-59).
         crate::atomic_write::write_atomic(std::path::Path::new(path), bytes).map_err(|e| bad("save", format!("{path}: {e}")))
     }
     #[cfg(target_arch = "wasm32")]
@@ -482,7 +482,7 @@ fn run_saveas(s: &mut Session, p: &Value) -> Result<Value> {
 /// default), and for DWG at least 2004 (the io layer's rule: R2000 DWG has no true colours).
 fn drawing_version(s: &Session, path: &str) -> Version {
     let v =
-        s.doc().ok().and_then(|d| d.header.get("ACADVER").and_then(cadcraft_doc::HVal::as_str).and_then(Version::for_acadver)).unwrap_or_default();
+        s.doc().ok().and_then(|d| d.header.get("ACADVER").and_then(lividraft_doc::HVal::as_str).and_then(Version::for_acadver)).unwrap_or_default();
     if is_dxf(path) { v } else { v.max(Version::R2004) }
 }
 
@@ -509,12 +509,12 @@ fn run_bytes(s: &mut Session, p: &Value) -> Result<Value> {
     Ok(r)
 }
 
-/// Entities a DXF or DWG file doesn't keep: those of object types CADCraft doesn't model
+/// Entities a DXF or DWG file doesn't keep: those of object types LiVi Draft doesn't model
 /// (3DSOLID, MULTILEADER… read from other programs' files and kept in the drawing, but
 /// not written), counted by DXF type across model space, layouts and block definitions. Saved
 /// at the drawing's own version; see [`not_saved_as`].
 pub fn not_saved(d: &Drawing) -> std::collections::BTreeMap<String, usize> {
-    let v = d.header.get("ACADVER").and_then(cadcraft_doc::HVal::as_str).and_then(Version::for_acadver).unwrap_or_default();
+    let v = d.header.get("ACADVER").and_then(lividraft_doc::HVal::as_str).and_then(Version::for_acadver).unwrap_or_default();
     not_saved_as(d, v)
 }
 
@@ -529,7 +529,7 @@ pub fn not_saved_as(d: &Drawing, version: Version) -> std::collections::BTreeMap
     let stored = if version >= Version::R2013 { d.foreign.data_store_entities() } else { Default::default() };
     let stores = std::iter::once(&d.model).chain(d.layouts.iter().map(|l| &l.entities)).chain(d.blocks.values().map(|b| &b.entities));
     for e in stores.flat_map(|s| s.iter()) {
-        if let cadcraft_doc::EntityKind::Unknown(u) = &e.kind {
+        if let lividraft_doc::EntityKind::Unknown(u) = &e.kind {
             if MODELER_TYPES.iter().any(|t| u.dxf_type.eq_ignore_ascii_case(t)) && stored.contains(&e.handle) {
                 continue;
             }
@@ -645,7 +645,7 @@ mod tests {
     }
 
     fn temp_script(name: &str, text: &str) -> String {
-        let path = std::env::temp_dir().join(format!("cadcraft-script-{}-{name}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("lividraft-script-{}-{name}", std::process::id()));
         std::fs::write(&path, text).unwrap();
         path.to_string_lossy().into_owned()
     }

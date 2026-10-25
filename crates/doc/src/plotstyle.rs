@@ -5,7 +5,7 @@
 //! objects name directly. Each style can replace the object's colour, fade it (screening), turn
 //! it grey, and replace its linetype and lineweight.
 //!
-//! CADCraft's built-in tables are our own definitions, not copies of any vendor's files:
+//! LiVi Draft's built-in tables are our own definitions, not copies of any vendor's files:
 //! [`DEFAULT_CTB`] keeps the object's properties, [`MONOCHROME_CTB`] prints everything black
 //! and [`GRAYSCALE_CTB`] prints every colour as the grey of its luminance; the named
 //! [`DEFAULT_STB`] offers `Normal`, `Black`, `Screened 50%` and `Thick`, and
@@ -14,7 +14,7 @@
 //! Tables are saved as files in our own JSON format (see `docs/plot-styles.md`):
 //! [`PlotStyleTable::to_file_text`] and [`PlotStyleTable::from_file_text`].
 
-use cadcraft_color::Rgb;
+use lividraft_color::Rgb;
 use serde::{Deserialize, Serialize};
 
 /// Built-in colour-dependent table that prints objects with their own properties.
@@ -129,7 +129,7 @@ fn is_default<T: Default + PartialEq>(v: &T) -> bool {
 
 /// `Option<Rgb>` as `"#rrggbb"` (also read from `[r, g, b]`).
 mod rgb_hex {
-    use cadcraft_color::Rgb;
+    use lividraft_color::Rgb;
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S: Serializer>(c: &Option<Rgb>, s: S) -> Result<S::Ok, S::Error> {
@@ -361,11 +361,11 @@ impl PlotStyleTable {
         if text.len() > MAX_TABLE_FILE {
             return Err("the plot style table file is too large".into());
         }
-        let v: serde_json::Value = serde_json::from_str(text).map_err(|e| format!("not a CADCraft plot style table: {e}"))?;
+        let v: serde_json::Value = serde_json::from_str(text).map_err(|e| format!("not a LiVi Draft plot style table: {e}"))?;
         match v.get(FILE_MARKER).and_then(serde_json::Value::as_u64) {
             Some(FILE_VERSION) => {}
-            Some(n) => return Err(format!("plot style table format version {n} is newer than this CADCraft reads")),
-            None => return Err(format!("not a CADCraft plot style table (no `{FILE_MARKER}`)")),
+            Some(n) => return Err(format!("plot style table format version {n} is newer than this LiVi Draft reads")),
+            None => return Err(format!("not a LiVi Draft plot style table (no `{FILE_MARKER}`)")),
         }
         let t: PlotStyleTable = serde_json::from_value(v).map_err(|e| format!("bad plot style table: {e}"))?;
         Ok(t.sanitized())

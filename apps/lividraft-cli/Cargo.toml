@@ -1,0 +1,17 @@
+[package]
+name = "lividraft-cli"
+description = "LiVi Draft command-line tool: info, convert, run scripts, export, commands, MCP server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+lividraft-engine = { workspace = true }
+lividraft-io = { workspace = true }
+lividraft-mcp = { workspace = true }
+lividraft-render = { workspace = true }
+serde_json = { workspace = true }

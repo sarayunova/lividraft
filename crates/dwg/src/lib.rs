@@ -1,9 +1,9 @@
 //! DWG support through a DXF bridge.
 //!
 //! DWG files are read with the `acadrust` crate (MPL-2.0, used unmodified as a dependency) and
-//! converted to DXF bytes, which CADCraft's own DXF reader maps to its document model; saving
+//! converted to DXF bytes, which LiVi Draft's own DXF reader maps to its document model; saving
 //! goes the other way. Keeping the dependency behind this byte-level API isolates it: nothing
-//! else in CADCraft depends on its types. Native targets only (it memory-maps files).
+//! else in LiVi Draft depends on its types. Native targets only (it memory-maps files).
 //!
 //! # Guardrails around the third-party decoder
 //!
@@ -89,7 +89,7 @@ mod native {
     /// passes for a complete one.
     pub fn dwg_to_dxf_noted(bytes: &[u8], limits: Limits) -> Result<(Vec<u8>, Vec<String>), String> {
         if bytes.len() > limits.max_dwg_bytes {
-            return Err(format!("DWG: the file is {}, larger than the {} CADCraft opens", mb(bytes.len() as u64), mb(limits.max_dwg_bytes as u64)));
+            return Err(format!("DWG: the file is {}, larger than the {} LiVi Draft opens", mb(bytes.len() as u64), mb(limits.max_dwg_bytes as u64)));
         }
         let outcome = std::panic::catch_unwind(|| {
             acadrust::DwgReader::from_stream_with_options(Cursor::new(bytes), acadrust::DwgReadOptions::failsafe()).read_with_stats()
@@ -235,7 +235,7 @@ mod native {
     /// merged cells into the table's `merged_ranges` only, while its DXF writer writes each cell's
     /// own merge groups (173, 175, 176), so without this the merges would be lost. Tables whose
     /// cells already carry merges are left alone. Each range's first cell gets the span; the
-    /// cells it covers are marked merged with no span of their own, as CADCraft's DXF writer does.
+    /// cells it covers are marked merged with no span of their own, as LiVi Draft's DXF writer does.
     fn table_merges(doc: &mut acadrust::CadDocument) {
         for e in doc.entities_mut() {
             let acadrust::entities::EntityType::Table(t) = e else { continue };
@@ -292,7 +292,7 @@ mod native {
 
     /// The DWG dimension flags byte. Its bit 1 is DXF group 70's bit 32 (ODA DWG specification,
     /// common dimension data), which acadrust keeps no copy of from DXF: it is set here as
-    /// CADCraft's DXF writer always sets it (#1094). Bit 0, the opposite of group 70's bit 128,
+    /// LiVi Draft's DXF writer always sets it (#1094). Bit 0, the opposite of group 70's bit 128,
     /// acadrust 0.6.5 reads and writes itself.
     fn dimension_flags(doc: &mut acadrust::CadDocument) {
         for e in doc.entities_mut() {
@@ -307,7 +307,7 @@ mod native {
     /// removes them as orphaned data): in a real 83 MB site plan they were 888,483 of 889,053
     /// components and made its DXF rendition 1.2 GB, over [`Limits::DEFAULT`], so the file
     /// didn't open at all. No definition that was read refers to them (a definition the reader
-    /// skipped can't use them either) and CADCraft doesn't draw DGN line styles, so nothing
+    /// skipped can't use them either) and LiVi Draft doesn't draw DGN line styles, so nothing
     /// visible is lost.
     /// Every component a definition reaches (directly, or through compound and point
     /// components) is kept, as are the definitions; dictionary entries that named a dropped
@@ -359,7 +359,7 @@ mod native {
 
     /// Leave out what acadrust can't write as this DWG version: other programs' custom entities
     /// and objects without raw DWG data of that version. acadrust 0.6.4 refuses the whole file
-    /// for one of them (0.6.3 left them out); CADCraft already tells the user which entity types
+    /// for one of them (0.6.3 left them out); LiVi Draft already tells the user which entity types
     /// a DWG doesn't keep (`not_saved`), so the rest of the drawing is written. Returns how many.
     fn drop_unwritable(doc: &mut acadrust::CadDocument) -> usize {
         let version = doc.version;
@@ -519,7 +519,7 @@ mod native {
         // runs inside `catch_unwind` so a decode failure is reported rather than crashing.
         if dxf.len() > Limits::DEFAULT.max_dxf_bytes {
             return Err(format!(
-                "DXF: the input is {}, larger than the {} CADCraft converts to DWG",
+                "DXF: the input is {}, larger than the {} LiVi Draft converts to DWG",
                 mb(dxf.len() as u64),
                 mb(Limits::DEFAULT.max_dxf_bytes as u64)
             ));
@@ -576,11 +576,11 @@ mod native {
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::{dwg_to_dxf, dwg_to_dxf_noted, dwg_to_dxf_with, dxf_to_dwg, dxf_to_dwg_as};
 
-/// The error for a DWG version CADCraft can't write.
+/// The error for a DWG version LiVi Draft can't write.
 #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
 fn unsupported(version: &str) -> String {
     let list: Vec<&str> = VERSIONS.iter().map(|(_, year)| *year).collect();
-    format!("DWG version `{version}` can't be written (CADCraft writes {})", list.join(", "))
+    format!("DWG version `{version}` can't be written (LiVi Draft writes {})", list.join(", "))
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -696,7 +696,7 @@ mod tests {
             assert_eq!(seen.iter().filter(|(t, _)| t == text).count(), 4, "{seen:?}");
         }
 
-        // And CADCraft reads its own DWG back as it wrote it: 128 only on the moved texts.
+        // And LiVi Draft reads its own DWG back as it wrote it: 128 only on the moved texts.
         let dxf = String::from_utf8(dwg_to_dxf(&dwg).unwrap()).unwrap();
         let lines: Vec<&str> = dxf.lines().map(str::trim).collect();
         let mut flags = Vec::new();

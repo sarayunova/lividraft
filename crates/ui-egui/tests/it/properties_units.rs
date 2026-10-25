@@ -2,12 +2,12 @@
 //! them (feet and inches included), distances are shown in the drawing's units, and text that
 //! isn't a number is reported instead of being dropped.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::EntityKind;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Key, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{Queryable, by};
+use lividraft_engine::Session;
+use lividraft_engine::doc::EntityKind;
+use lividraft_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 /// A selected TEXT 2.5 high, with lengths in `lunits`.
@@ -19,7 +19,7 @@ fn palettes(lunits: i64) -> Harness<'static, CadApp> {
     let mut h = Harness::builder().with_size(vec2(400.0, 1400.0)).build_ui_state(
         |ui, app: &mut CadApp| {
             app.logic(&ui.ctx().clone());
-            cadcraft_ui_egui::palettes::right_palettes(app, ui);
+            lividraft_ui_egui::palettes::right_palettes(app, ui);
         },
         app,
     );

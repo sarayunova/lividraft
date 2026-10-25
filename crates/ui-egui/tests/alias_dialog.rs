@@ -5,12 +5,12 @@
 
 use std::sync::Mutex;
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::resolve_alias;
-use cadcraft_ui_egui::aliasdlg::Form;
-use cadcraft_ui_egui::{CadApp, Services, dialogs, theme};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
+use lividraft_engine::Session;
+use lividraft_engine::cmd::resolve_alias;
+use lividraft_ui_egui::aliasdlg::Form;
+use lividraft_ui_egui::{CadApp, Services, dialogs, theme};
 use serde_json::json;
 
 static ONE_AT_A_TIME: Mutex<()> = Mutex::new(());
@@ -195,7 +195,7 @@ fn refused_aliases_stay_out_of_the_list_and_say_why() {
 #[test]
 fn the_dialog_names_the_alias_file_reinit_reads() {
     let _one = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
-    let dir = std::env::temp_dir().join(format!("cadcraft-aliasdlg-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("lividraft-aliasdlg-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let file = dir.join("mine.pgp");
     std::fs::write(&file, "ZZFC, *CIRCLE\n").unwrap();
@@ -212,7 +212,7 @@ fn the_dialog_names_the_alias_file_reinit_reads() {
         st.filter = "circle".into();
         h.run_steps(3);
         std::fs::create_dir_all(&directory).unwrap();
-        h.render().unwrap().save(directory.join("cadcraft-aliasedit.png")).unwrap();
+        h.render().unwrap().save(directory.join("lividraft-aliasedit.png")).unwrap();
     }
     h.state_mut().run("aliasedit", json!({ "clear": true })).unwrap();
     let _ = std::fs::remove_dir_all(&dir);

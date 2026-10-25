@@ -17,11 +17,11 @@
 
 use std::sync::{Arc, Mutex};
 
-use cadcraft_color::Rgb;
-use cadcraft_geom::{Bounds2, Vec2};
-use cadcraft_render::{DisplayList, Kind};
 use egui_wgpu::wgpu;
 use egui_wgpu::wgpu::util::DeviceExt;
+use lividraft_color::Rgb;
+use lividraft_geom::{Bounds2, Vec2};
+use lividraft_render::{DisplayList, Kind};
 
 /// Line/triangle vertex: position (2 × f32, relative to the origin) + sRGB colour (4 × u8,
 /// premultiplied by its alpha: transparent objects blend with what is under them).
@@ -795,8 +795,8 @@ fn batch_ranges(counts: impl IntoIterator<Item = u32>, range: std::ops::Range<us
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::Handle;
-    use cadcraft_render::DPrim;
+    use lividraft_doc::Handle;
+    use lividraft_render::DPrim;
 
     #[test]
     fn surface_config_prefers_low_latency_where_asked_and_honours_override() {
